@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+:root {
+  --qin-forest: #2f4a3a;
+  --qin-moss: #7a9a5b;
+  --qin-sand: #e6d8b4;
+  --qin-bark: #6b4a32;
+  --qin-night: #1f2a2e;
+  /* Ukuran kontrol sentuh mengecil di layar pendek (landscape HP kecil). */
+  --joy-size: clamp(104px, min(36vw, 32vh), 156px);
+  --btn-size: clamp(64px, min(20vw, 18vh), 88px);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: var(--qin-night);
+  color: var(--qin-sand);
+  font-family: ui-rounded, "SF Pro Rounded", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  /* Cegah gestur bawaan browser mengganggu kontrol game di mobile */
+  overscroll-behavior: none;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+canvas {
+  display: block;
+  outline: none;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--qin-sand);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
