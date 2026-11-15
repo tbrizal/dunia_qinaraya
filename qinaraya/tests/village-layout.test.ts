@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { gameConfig } from "../src/config/gameConfig.ts";
 import { NPCS } from "../src/data/npcs.ts";
+import { PLACES } from "../src/data/places.ts";
 import { resolveCollisions } from "../src/systems/movement/collision.ts";
 import { createPlayerState, stepPlayer } from "../src/systems/movement/stepPlayer.ts";
 import { villageLayout } from "../src/worlds/qinaraya-village/villageLayout.ts";
@@ -110,4 +111,38 @@ test("NPC tidak berada di dalam bangunan atau di atas petak kebun", () => {
       assert.ok(!(Math.abs(npc.x - p.cx) < p.w / 2 && Math.abs(npc.z - p.cz) < p.d / 2), `${npc.id} di ${p.id}`);
     }
   }
+});
+
+test("titik berdiri lokasi (masjid, musala, tempat wudu) bebas collider dan dekat bangunannya", () => {
+  for (const place of PLACES) {
+    assert.equal(resolveCollisions({ x: place.x, z: place.z }, player.radius, colliders, bounds), false, `${place.id}: titik terhalang`);
+    const building = buildings.find((b) => b.id === place.id || (place.id === "masjid" && b.id === "mosque"));
+    assert.ok(building, `${place.id}: bangunan tidak ditemukan`);
+    const dx = Math.max(Math.abs(place.x - building!.x) - building!.width / 2, 0);
+    const dz = Math.max(Math.abs(place.z - building!.z) - building!.depth / 2, 0);
+    assert.ok(Math.hypot(dx, dz) <= gameConfig.interaction.poiRange, `${place.id}: terlalu jauh dari bangunan (${Math.hypot(dx, dz).toFixed(2)} m)`);
+  }
+});
+
+test("setiap lokasi bisa dijangkau berjalan dari titik awal", () => {
+  for (const place of PLACES) {
+    const s = createPlayerState(player.spawn.x, player.spawn.z, 0);
+    let reached = false;
+    for (let i = 0; i < 60 * 40 && !reached; i++) {
+      const dx = place.x - s.x;
+      const dz = place.z - s.z;
+      const dist = Math.hypot(dx, dz);
+      if (dist < 0.6) reached = true;
+      // Arahkan langsung ke tujuan (yaw 0: maju = -Z, kanan = +X).
+      stepPlayer(s, { moveX: dx / (dist || 1), moveY: -dz / (dist || 1), sprint: true }, 0, 1 / 60, player, colliders, bounds);
+    }
+    assert.ok(reached, `${place.id}: tidak terjangkau (tertahan di ${s.x.toFixed(1)}, ${s.z.toFixed(1)})`);
+  }
+});
+
+test("Ustadz Harun berdiri dekat pintu masjid dan titik masjid tidak tertutup olehnya", () => {
+  const ustadz = NPCS.find((n) => n.id === "ustadz-harun")!;
+  const masjid = PLACES.find((p) => p.id === "masjid")!;
+  assert.ok(Math.hypot(ustadz.x - masjid.x, ustadz.z - masjid.z) < 4);
+  assert.ok(Math.hypot(ustadz.x - masjid.x, ustadz.z - masjid.z) > 1.2, "NPC tidak boleh menutup titik berdiri masjid");
 });

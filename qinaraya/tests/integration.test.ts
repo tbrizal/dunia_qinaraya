@@ -52,6 +52,9 @@ before(async () => {
     layout: await load("/src/worlds/qinaraya-village/villageLayout.ts"),
     settings: await load("/src/stores/useSettingsStore.ts"),
   };
+  // Seperti main.tsx pada build development: konten belum ditinjau didaftarkan sebelum game dimulai.
+  const unreviewed: Mod = await load("/src/data/unreviewed/index.ts");
+  unreviewed.registerUnreviewedContent();
 });
 
 after(async () => {
@@ -230,27 +233,27 @@ test("load dari save yang tersimpan memulihkan state", () => {
 });
 
 test("save rusak: dicadangkan, game baru dimulai, dan tidak melempar error", () => {
-  memory.set("qinaraya.save.v1", "{rusak");
+  memory.set("qinaraya.save", "{rusak");
   assert.equal(m.persistence.bootstrapGame(), "new");
   assert.equal(memory.get("qinaraya.save.backup"), "{rusak");
 });
 
 test("save dari versi lebih baru tidak ditimpa oleh autosave", () => {
   const future = JSON.stringify({ version: 99, data: "masa depan" });
-  memory.set("qinaraya.save.v1", future);
+  memory.set("qinaraya.save", future);
   assert.equal(m.persistence.bootstrapGame(), "new");
   assert.equal(m.persistence.saveGame(), false);
-  assert.equal(memory.get("qinaraya.save.v1"), future);
+  assert.equal(memory.get("qinaraya.save"), future);
   m.persistence.startNewGame(); // pemain memilih mulai baru: boleh menimpa
-  assert.notEqual(memory.get("qinaraya.save.v1"), future);
+  assert.notEqual(memory.get("qinaraya.save"), future);
 });
 
 test("posisi tersimpan di dalam collider dipindahkan ke tempat aman saat load", async () => {
   const { playerState } = await server.ssrLoadModule("/src/systems/player/playerState.ts");
   m.persistence.startNewGame();
-  const raw = JSON.parse(memory.get("qinaraya.save.v1")!);
+  const raw = JSON.parse(memory.get("qinaraya.save")!);
   raw.player = { x: 0, z: -16, heading: 0 }; // tepat di tengah masjid
-  memory.set("qinaraya.save.v1", JSON.stringify(raw));
+  memory.set("qinaraya.save", JSON.stringify(raw));
   assert.equal(m.persistence.bootstrapGame(), "loaded");
   const inside = m.layout.villageLayout.colliders.some(
     (c: Mod) => c.kind === "box" && playerState.x > c.minX && playerState.x < c.maxX && playerState.z > c.minZ && playerState.z < c.maxZ,

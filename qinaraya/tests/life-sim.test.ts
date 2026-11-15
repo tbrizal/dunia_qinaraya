@@ -285,7 +285,7 @@ const targets: Interactable[] = [
   { kind: "plot", id: "plot-2", cx: 3, cz: 0, w: 2, d: 2 },
   { kind: "npc", id: "npc", x: 8, z: 0 },
 ];
-const ranges = { plotRange: 0.9, npcRange: 2.2 };
+const ranges = { plotRange: 0.9, npcRange: 2.2, poiRange: 2.0 };
 
 test("jarak ke petak diukur dari tepi, dan 0 saat berdiri di dalamnya", () => {
   assert.equal(distanceToInteractable(targets[0]!, 0.5, 0.5), 0);

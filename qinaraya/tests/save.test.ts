@@ -1,9 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { registerUnreviewedContent } from "../src/data/unreviewed/index.ts";
 import { addAll, createInventory } from "../src/systems/inventory/inventory.ts";
 import { createPlot, plantCrop, tillPlot, waterPlot } from "../src/systems/farming/farmPlot.ts";
 import { SAVE_VERSION, parseSave, serializeSave } from "../src/systems/save/saveSystem.ts";
 import type { SaveContext, SaveData } from "../src/systems/save/saveSystem.ts";
+
+// Meniru build development: materi draf dikenal, sehingga id-nya valid pada save.
+registerUnreviewedContent();
 
 const ctx: SaveContext = {
   plotIds: ["plot-1", "plot-2", "plot-3"],
@@ -28,7 +32,8 @@ function sample(): SaveData {
     ]),
     farm: { plots: [planted, createPlot("plot-2"), createPlot("plot-3")] },
     quests: { tutorial_farming: { status: "active", objectives: [1, 1, 0, 0] } },
-    settings: { cameraSensitivity: 1.6, showFps: true },
+    learning: { learned: ["masjid-intro"] },
+    settings: { cameraSensitivity: 1.6, showFps: true, prayerNotifications: false, prayerSound: true },
   };
 }
 
@@ -54,6 +59,26 @@ test("JSON rusak dan bentuk salah ditolak tanpa melempar error", () => {
 test("versi lebih baru ditolak agar tidak menimpa save masa depan", () => {
   const r = parseSave(JSON.stringify({ ...sample(), version: SAVE_VERSION + 1 }), ctx);
   assert.deepEqual(r, { ok: false, reason: "newer-version" });
+});
+
+test("migrasi v1 ke v2: save Phase 2 tetap terbuka dan mendapat nilai default Phase 3", () => {
+  const v1 = JSON.parse(serializeSave(sample()));
+  v1.version = 1;
+  delete v1.learning;
+  v1.settings = { cameraSensitivity: 1.3, showFps: true };
+  const data = parseOk(JSON.stringify(v1));
+  assert.equal(data.version, SAVE_VERSION);
+  assert.deepEqual(data.learning.learned, []);
+  assert.equal(data.settings.prayerNotifications, true);
+  assert.equal(data.settings.prayerSound, false, "bunyi default mati");
+  assert.equal(data.settings.cameraSensitivity, 1.3);
+  assert.deepEqual(data.inventory, sample().inventory, "kemajuan lama tetap utuh");
+});
+
+test("catatan materi: id tidak dikenal dan duplikat dibuang", () => {
+  const raw = JSON.parse(serializeSave(sample()));
+  raw.learning = { learned: ["masjid-intro", "masjid-intro", "materi-hantu", 5, "wudu-intro"] };
+  assert.deepEqual(parseOk(JSON.stringify(raw)).learning.learned, ["masjid-intro", "wudu-intro"]);
 });
 
 test("versi lama tanpa migrasi ditolak dengan aman", () => {
@@ -127,12 +152,14 @@ test("quest: status tidak valid dibuang, progres dibatasi sesuai objektif", () =
 test("posisi, pengaturan, dan nama profil yang rusak memakai nilai default", () => {
   const raw = JSON.parse(serializeSave(sample()));
   raw.player = { x: "a", z: null, heading: Infinity };
-  raw.settings = { cameraSensitivity: 50, showFps: "ya" };
+  raw.settings = { cameraSensitivity: 50, showFps: "ya", prayerSound: "ya" };
   raw.profile = { name: "   " };
   const data = parseOk(JSON.stringify(raw));
   assert.deepEqual(data.player, { x: 0, z: 10, heading: Math.PI });
   assert.equal(data.settings.cameraSensitivity, 2.5);
   assert.equal(data.settings.showFps, false);
+  assert.equal(data.settings.prayerSound, false);
+  assert.equal(data.settings.prayerNotifications, true);
   assert.equal(data.profile.name, "Pemain");
 });
 
