@@ -5,7 +5,7 @@
 Game simulasi kehidupan fantasi 3D (third-person) untuk anak dan keluarga.
 Acuan desain utama: `QINARAYA_MASTER_GDD.md`.
 
-**Status:** Phase 2 (Life simulation core) selesai: Game Clock, interaksi, inventory, farming, NPC dan dialog, quest tutorial, serta save/load lokal. Belum ada sistem Islami, event musiman, atau multiplayer.
+**Status:** Phase 3 (Islamic lifestyle foundation) selesai: kalender Hijriah simulasi, jadwal salat simulasi, pengingat lembut, masjid dan musala yang bisa dikunjungi, materi edukasi, dan tiga quest pembelajaran. **Semua materi agama berstatus belum ditinjau dan tidak tampil di build produksi** (lihat bagian Kebijakan konten). Belum ada event musiman (Phase 4) atau multiplayer.
 
 ## Teknologi
 
@@ -19,7 +19,8 @@ Butuh Node.js 20 atau lebih baru (Node 22.18+ untuk menjalankan test).
 npm install
 npm run dev        # server pengembangan
 npm run typecheck  # pemeriksaan TypeScript
-npm test           # 100+ test: logic murni, layout desa, dan integrasi store (tanpa browser)
+npm test           # 160+ test: logic, layout, integrasi store, dan isi bundle build (tanpa browser)
+npm run content:review  # membuat docs/CONTENT_REVIEW.md untuk peninjau konten
 npm run build      # type-check + build produksi ke dist/
 npm run preview    # menjalankan hasil build secara lokal
 ```
@@ -35,6 +36,7 @@ Mencoba dari HP di jaringan yang sama: `npm run dev -- --host`, lalu buka alamat
 | Layar sentuh | Joystick kiri untuk berjalan, tombol Lari ditahan untuk berlari, geser layar untuk memutar kamera, cubit untuk zoom |
 | Interaksi | E atau Enter untuk aksi utama, angka 1 sampai 4 untuk pilihan lain. Di layar sentuh, ketuk tombol aksi di kanan bawah |
 | Tas | Tombol tas di kanan atas atau tombol I |
+| Kalender dan jadwal salat | Ketuk panel jam di kiri atas atau tombol T |
 | Semua | Tombol pengaturan di kanan atas atau tombol Escape: sensitivitas kamera, kontrol sentuh, FPS, kecepatan waktu (uji), game baru |
 
 Gerakan selalu relatif terhadap arah kamera. Kontrol sentuh tampil otomatis di perangkat layar sentuh;
@@ -51,6 +53,32 @@ di desktop bisa dipaksa muncul lewat pengaturan (berguna untuk uji dengan device
 Untuk menguji lebih cepat, naikkan kecepatan waktu (4x atau 16x) di pengaturan.
 Nara berada di dekat plaza dan memberi petunjuk tempat-tempat di desa.
 
+## Phase 3: gaya hidup Islami (simulasi)
+
+- **Panel jam (kiri atas)** menampilkan jam game, tanggal Hijriah simulasi, dan waktu salat berikutnya. Ketuk untuk melihat kalender dan jadwal lima waktu.
+- **Pengingat lembut** muncul tepat sekali saat waktu salat simulasi tiba. Tidak ada hukuman, skor, atau kewajiban; bisa dimatikan di pengaturan. Bunyi denting (buatan kode, bukan azan) default mati.
+- **Lokasi:** Masjid Qinaraya (utara), Musala (timur laut), dan Tempat wudu (kiri masjid). Berdiri di depannya lalu tekan E atau ketuk tombol aksi.
+- **Ustadz Harun** berdiri di depan masjid dan memberi tiga quest pembelajaran: berkenalan dengan masjid, bersih dan bersuci, dan berbagi hasil kebun (butuh quest kebun selesai). Hadiahnya hanya dekorasi.
+
+**Kalender dan jadwal adalah simulasi buatan game.** Tidak memakai GPS, lokasi, atau API dunia nyata, dan bukan penetapan tanggal ibadah.
+Konfigurasi ada di `src/config/lifestyleConfig.ts`: tanggal awal, jumlah hari per bulan, kecepatan kalender, dan jam kelima salat.
+
+### Kebijakan konten (penting)
+
+Semua materi agama yang ditulis pengembang berstatus `draft` atau `needs-review`. Aturannya:
+
+- Konten non-`approved` **tidak ikut terkirim** pada build produksi. Teksnya dipisah ke `src/data/unreviewed/` dan hanya dimuat lewat dynamic import saat build mengizinkan. `npm test` membangun aplikasi sungguhan dan memeriksa bahwa teksnya tidak ada di bundle produksi.
+- Tanpa konten itu, game tetap utuh: masjid tetap bisa dikunjungi dan halamannya dibersihkan, Ustadz Harun berdialog cadangan non-agama, quest kebun berjalan normal.
+- Build mengizinkan konten belum ditinjau hanya di: development (`npm run dev`), atau build uji dengan `VITE_SHOW_UNREVIEWED_CONTENT=true`.
+  **Di Vercel, atur variabel ini hanya untuk environment Preview, jangan Production.** Pada Production (`VERCEL_ENV=production`) saklar ini otomatis diabaikan.
+- Panel materi menampilkan label "Mode uji: belum ditinjau" setiap kali materi draf tampil.
+- Tidak ada kutipan ayat atau hadis. Materi wudu dan waktu salat berstatus `needs-review` dan merujuk perbedaan rincian ke orang tua atau guru.
+- Untuk menyetujui materi, ikuti `docs/CONTENT_REVIEW.md` (dibuat otomatis, berisi seluruh teks dan kolom persetujuan). Status `approved` tanpa `reviewedBy` dan `reviewedAt` ditolak oleh test.
+
+### Panel debug (hanya development)
+
+Tombol "DEV waktu" di bawah layar saat `npm run dev`: lompat waktu, lompat ke tanggal Hijriah (misalnya 1 Ramadan), maju sampai satu menit sebelum waktu salat berikutnya (untuk menguji pengingat), dan reset quest atau materi. Panel ini tidak ada di build produksi.
+
 ## Struktur folder
 
 ```text
@@ -60,11 +88,13 @@ src/
 │   ├── game/               # 3D: Canvas, PlayerRig, GameLoop, CharacterModel, FpsMeter
 │   └── ui/                 # HUD, tombol aksi, dialog, tas, pengaturan, joystick, toast
 ├── config/gameConfig.ts    # Semua angka penyeimbang
-├── data/                   # Data murni: items, crops, npcs, quests, dialogues
+├── data/                   # Data murni: items, crops, npcs, places, quests, dialogues, learning
+│   └── unreviewed/         # Konten agama BELUM ditinjau (tidak ikut build produksi)
 ├── hooks/                  # useKeyboardInput
 ├── stores/                 # Zustand + orkestrasi aksi (gameActions, dialogueActions, persistence)
 ├── systems/                # Logic murni tanpa DOM/Three.js (dites di Node)
 │   ├── time/               # GameClock, siang-malam, waktu hari
+│   ├── calendar/  prayer/  content/  audio/   # Hijriah simulasi, jadwal salat, gerbang review, denting
 │   ├── inventory/  farming/  quest/  dialogue/  interaction/
 │   ├── movement/  camera/  input/  player/
 │   └── save/               # Format save, validasi, migrasi versi
@@ -96,15 +126,15 @@ pada Phase 3 di atas Game Clock yang sama.
 
 ## Save
 
-Disimpan di `localStorage` (kunci `qinaraya.save.v1`), berisi posisi, waktu dunia, tas, kebun, quest, dan pengaturan.
+Disimpan di `localStorage` (kunci `qinaraya.save`; kunci Phase 2 `qinaraya.save.v1` tetap dibaca dan dimigrasikan), berisi posisi, waktu dunia, tas, kebun, quest, dan pengaturan.
 Autosave tiap 20 detik, setelah perubahan penting, dan saat tab disembunyikan. Data divalidasi ketat saat dimuat.
 Save rusak dicadangkan ke `qinaraya.save.backup` sebelum game baru dimulai; save dari versi lebih baru tidak ditimpa.
-Mengubah struktur save: naikkan `SAVE_VERSION` dan tambah migrasi di `systems/save/saveSystem.ts`.
+Format saat ini versi 2 (migrasi v1 ke v2 sudah ada dan teruji). Mengubah struktur save: naikkan `SAVE_VERSION` dan tambah migrasi di `systems/save/saveSystem.ts`.
 
 ## Penyeimbangan
 
 Ubah di `src/config/gameConfig.ts`: kecepatan jalan/lari, kamera, kecepatan waktu game, ukuran tas, lama satu kali siram,
-jangkauan interaksi, dan interval autosave. Waktu tumbuh tanaman ada di `data/crops.ts`.
+jangkauan interaksi, dan interval autosave. Waktu tumbuh tanaman ada di `data/crops.ts`, jadwal salat dan kalender di `config/lifestyleConfig.ts`.
 Tata letak desa diubah di `villageLayout.ts` (posisi bangunan, jalan, kebun, jumlah pohon).
 
 ## Deploy frontend ke Vercel
@@ -140,12 +170,27 @@ Unit test memverifikasi logic, tetapi rasa kontrol dan tampilan harus diuji di p
 - [ ] Muat ulang halaman: posisi, tas, kebun, quest, dan waktu kembali seperti terakhir.
 - [ ] Layar kecil (sekitar 320 px): tombol aksi, HUD, tas, dan dialog tidak saling menutupi.
 
+## Daftar uji manual tambahan (Phase 3)
+
+- [ ] Panel jam menampilkan jam, tanggal Hijriah, dan waktu salat berikutnya; ketuk membuka kalender dan jadwal.
+- [ ] Tanggal berganti tepat tengah malam game. Gunakan panel DEV untuk lompat ke 1 Ramadan.
+- [ ] Pengingat salat muncul sekali, tidak berulang, dan hilang sendiri. Uji dengan tombol "Maju ke ... - 1 menit".
+- [ ] Mematikan pengingat di pengaturan benar-benar menghentikannya; bunyi denting hanya bila dinyalakan.
+- [ ] Masjid, musala, dan tempat wudu: prompt muncul saat berdiri di depannya; Ustadz Harun mudah dijangkau.
+- [ ] Materi terbaca per halaman (tombol Kembali, Lanjut, Selesai) dan terbaca baik di layar kecil.
+- [ ] Tiga quest berjalan sampai selesai dan hadiah dekorasi masuk tas.
+- [ ] Build produksi (`npm run build && npm run preview`): tidak ada materi agama, masjid tetap bisa dibersihkan, dialog Ustadz cadangan.
+- [ ] Muat ulang halaman: progres materi dan quest kembali; save Phase 2 lama tetap terbuka.
+- [ ] Teks materi dan dialog telah dibaca peninjau yang kompeten sebelum dipublikasikan.
+
 ## Keterbatasan saat ini
 
 - Semua model dan ikon adalah placeholder (bentuk dasar dan emoji). Aset final menyusul pada fase aset.
 - Kamera belum menghindari dinding, dan belum ada bayangan dinamis.
-- Belum ada pembuatan karakter, hewan ternak, memasak, jual-beli, dan Qina Coin (di luar ruang lingkup Phase 2).
-- Dialog NPC statis dan belum berisi konten keagamaan. Konten Islami (Phase 3) wajib ditinjau pihak kompeten sebelum rilis.
-- Save hanya di perangkat ini (belum ada akun atau cloud). Data dapat hilang bila pemain menghapus data browser.
-- Siang-malam hanya mengubah cahaya dan langit; NPC belum punya jadwal harian.
-- Dialog dan tas belum bisa dioperasikan dengan gamepad.
+- Belum ada pembuatan karakter, hewan ternak, memasak, jual-beli, dan Qina Coin.
+- **Belum ada peninjau konten.** Seluruh materi agama masih draf. Hingga ditinjau, build produksi tidak memuatnya.
+- Event Islami (Ramadan, Idulfitri, Iduladha, dan lain-lain) belum ada; itu Phase 4. Bila `calendarDaysPerGameDay` lebih dari 1, pencocokan event pada hari tertentu perlu memperhitungkan hari kalender yang terlewati.
+- Kalender memakai 30 hari per bulan agar sederhana; bulan Hijriah sebenarnya 29 atau 30 hari.
+- Denting pengingat dibuat dengan WebAudio dan belum teruji di perangkat. Peramban dapat menunda audio sampai ada interaksi pemain.
+- Save hanya di perangkat ini (tanpa akun atau cloud). Siang-malam hanya mengubah cahaya; NPC belum punya jadwal harian.
+- Dialog, tas, dan materi belum bisa dioperasikan dengan gamepad.
