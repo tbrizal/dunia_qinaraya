@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { gameConfig } from "../src/config/gameConfig.ts";
+import { NPCS } from "../src/data/npcs.ts";
 import { resolveCollisions } from "../src/systems/movement/collision.ts";
 import { createPlayerState, stepPlayer } from "../src/systems/movement/stepPlayer.ts";
 import { villageLayout } from "../src/worlds/qinaraya-village/villageLayout.ts";
@@ -79,4 +80,34 @@ test("jumlah objek dunia wajar untuk perangkat mobile", () => {
   const trees = villageLayout.interiorTrees.length + villageLayout.forestTrees.length;
   assert.ok(trees < 400, `terlalu banyak pohon: ${trees}`);
   assert.ok(villageLayout.interiorTrees.length >= 15, "terlalu sedikit pohon di desa");
+});
+
+test("setiap petak dan NPC bisa dijangkau dari titik yang bebas collider", () => {
+  const { gardenPlots } = villageLayout;
+  assert.equal(gardenPlots.length, 6);
+  assert.equal(new Set(gardenPlots.map((p) => p.id)).size, 6);
+
+  const free = (x: number, z: number) => !resolveCollisions({ x, z }, player.radius, colliders, bounds);
+  for (const p of gardenPlots) assert.ok(free(p.cx, p.cz), `${p.id}: pusat petak terhalang`);
+
+  for (const npc of NPCS) {
+    let reachable = false;
+    for (let a = 0; a < 360 && !reachable; a += 15) {
+      const x = npc.x + Math.cos((a * Math.PI) / 180) * 1.4;
+      const z = npc.z + Math.sin((a * Math.PI) / 180) * 1.4;
+      reachable = free(x, z);
+    }
+    assert.ok(reachable, `${npc.id} tidak bisa didekati`);
+  }
+});
+
+test("NPC tidak berada di dalam bangunan atau di atas petak kebun", () => {
+  for (const npc of NPCS) {
+    for (const b of buildings) {
+      assert.ok(!(Math.abs(npc.x - b.x) < b.width / 2 + 0.5 && Math.abs(npc.z - b.z) < b.depth / 2 + 0.5), `${npc.id} di ${b.id}`);
+    }
+    for (const p of villageLayout.gardenPlots) {
+      assert.ok(!(Math.abs(npc.x - p.cx) < p.w / 2 && Math.abs(npc.z - p.cz) < p.d / 2), `${npc.id} di ${p.id}`);
+    }
+  }
 });

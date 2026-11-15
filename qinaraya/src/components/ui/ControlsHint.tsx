@@ -8,7 +8,7 @@ export function ControlsHint() {
 
   useEffect(() => {
     const hide = () => setVisible(false);
-    const timer = window.setTimeout(hide, 12000);
+    const timer = window.setTimeout(hide, 14000);
     window.addEventListener("keydown", hide, { once: true });
     window.addEventListener("pointerdown", hide, { once: true });
     return () => {
@@ -18,25 +18,18 @@ export function ControlsHint() {
     };
   }, []);
 
+  if (!visible) return null;
   return (
     <div
-      aria-hidden={!visible}
-      className="pointer-events-none absolute z-[3] max-w-[26rem] rounded-xl px-4 py-3 text-sm transition-opacity duration-500"
-      style={{
-        top: "max(0.75rem, env(safe-area-inset-top))",
-        left: "max(0.75rem, env(safe-area-inset-left))",
-        right: "calc(4.25rem + env(safe-area-inset-right))",
-        opacity: visible ? 1 : 0,
-        color: "var(--qin-sand)",
-        background: "rgba(31, 42, 46, 0.6)",
-      }}
+      className="pointer-events-none rounded-xl px-3 py-2 text-sm"
+      style={{ background: "rgba(31, 42, 46, 0.6)", color: "var(--qin-sand)" }}
     >
       {touch ? (
-        <p>Geser joystick kiri untuk berjalan. Geser layar untuk memutar kamera, cubit untuk zoom.</p>
+        <p>Joystick kiri untuk berjalan. Geser layar untuk memutar kamera.</p>
       ) : (
         <>
-          <p>WASD atau tombol panah untuk berjalan, Shift untuk berlari.</p>
-          <p>Seret mouse untuk memutar kamera, roda mouse untuk zoom.</p>
+          <p>WASD atau panah untuk berjalan, Shift untuk berlari.</p>
+          <p>E untuk berinteraksi, I untuk tas.</p>
         </>
       )}
     </div>

@@ -48,6 +48,36 @@ export const gameConfig = {
     pinchZoomSpeed: 0.03,
     minHeight: 0.6,
   },
+  clock: {
+    /** 60 detik nyata = 1 jam game, jadi 1 hari game = 24 menit nyata. */
+    realSecondsPerGameHour: 60,
+    /** Kalender simulasi generik. Kalender Hijriah dipetakan di atasnya pada Phase 3. */
+    daysPerMonth: 30,
+    monthsPerYear: 12,
+    start: { day: 1, month: 1, year: 1, hour: 6, minute: 30 },
+    /** Pilihan kecepatan untuk pengujian. */
+    speedOptions: [1, 4, 16],
+    /** Batas delta per frame agar waktu tidak melompat setelah tab kembali aktif. */
+    maxTickSeconds: 0.25,
+  },
+  inventory: {
+    slots: 20,
+  },
+  farming: {
+    /** Satu kali siram membasahi tanah selama sekian menit game. */
+    waterDurationMinutes: 480,
+  },
+  interaction: {
+    /** Jarak maksimum (meter) dari tepi petak kebun. */
+    plotRange: 0.9,
+    /** Jarak maksimum (meter) dari pusat NPC. */
+    npcRange: 2.2,
+  },
+  save: {
+    key: "qinaraya.save",
+    autosaveSeconds: 20,
+    debounceMs: 1500,
+  },
   input: {
     joystickDeadZone: 0.12,
   },

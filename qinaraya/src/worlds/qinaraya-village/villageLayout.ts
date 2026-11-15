@@ -1,4 +1,5 @@
 import { gameConfig } from "../../config/gameConfig.ts";
+import { NPCS } from "../../data/npcs.ts";
 import { boxFromCenter } from "../../systems/movement/collision.ts";
 import type { Collider, WorldBounds } from "../../systems/movement/collision.ts";
 
@@ -28,6 +29,10 @@ export interface RectSpec {
   cz: number;
   w: number;
   d: number;
+}
+
+export interface PlotSpec extends RectSpec {
+  id: string;
 }
 
 export interface TreeSpec {
@@ -76,9 +81,10 @@ const roads: RectSpec[] = [
 const plaza = { x: 0, z: 0, radius: 5 };
 const well = { x: 3.4, z: -2.9, radius: 1.0 };
 
-const gardenPlots: RectSpec[] = [];
+const gardenPlots: PlotSpec[] = [];
+let plotNumber = 1;
 for (const cz of [13.2, 17.8]) {
-  for (const cx of [-19.5, -16.5, -13.5]) gardenPlots.push({ cx, cz, w: 2.6, d: 3.6 });
+  for (const cx of [-19.5, -16.5, -13.5]) gardenPlots.push({ id: `plot-${plotNumber++}`, cx, cz, w: 2.6, d: 3.6 });
 }
 const gardenArea: RectSpec = { cx: -16.5, cz: 15.5, w: 9.4, d: 9 };
 
@@ -176,6 +182,7 @@ function createLayout() {
     if (b.kind === "mosque") colliders.push({ kind: "circle", x: b.x + b.width / 2 + 1.3, z: b.z - b.depth / 2 + 1.2, radius: 0.85 });
   }
   colliders.push({ kind: "circle", x: well.x, z: well.z, radius: well.radius });
+  for (const npc of NPCS) colliders.push({ kind: "circle", x: npc.x, z: npc.z, radius: 0.5 });
   for (const t of interiorTrees) colliders.push({ kind: "circle", x: t.x, z: t.z, radius: 0.45 * t.scale });
 
   const bounds: WorldBounds = { minX: -half, maxX: half, minZ: -half, maxZ: half };

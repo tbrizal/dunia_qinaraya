@@ -1,6 +1,9 @@
 import { useEffect } from "react";
-import { keyboardInput, resetInput } from "../systems/input/inputState";
+import { advanceDialogue, chooseDialogueOption, closeDialogue } from "../stores/dialogueActions";
+import { triggerAction } from "../stores/gameActions";
 import { useSettingsStore } from "../stores/useSettingsStore";
+import { isModalOpen, useUiStore } from "../stores/useUiStore";
+import { keyboardInput, resetInput } from "../systems/input/inputState";
 
 type KeyAction = "forward" | "back" | "left" | "right" | "sprint";
 
@@ -17,23 +20,72 @@ const KEY_MAP: Record<string, KeyAction> = {
   ShiftRight: "sprint",
 };
 
+const DIGITS: Record<string, number> = { Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Digit5: 4 };
+
 function isTypingTarget(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
 }
 
-/** Menghubungkan keyboard ke input state. Escape membuka/menutup menu pengaturan. */
+/** Enter dan Spasi pada tombol yang sedang fokus ditangani tombol itu sendiri. */
+function isNativeActivation(target: EventTarget | null): boolean {
+  return target instanceof HTMLElement && (target.tagName === "BUTTON" || target.tagName === "INPUT" || target.tagName === "SELECT");
+}
+
+function handleEscape(): void {
+  const ui = useUiStore.getState();
+  if (ui.dialogue) closeDialogue();
+  else if (ui.inventoryOpen) ui.setInventoryOpen(false);
+  else useSettingsStore.getState().toggleSettings();
+  resetInput();
+}
+
+/**
+ * Menghubungkan keyboard ke game.
+ * Gerak: WASD/panah, Shift. Aksi: E atau Enter (utama), 1-4 (pilihan aksi), I (tas), Esc (tutup/pengaturan).
+ */
 export function useKeyboardInput(): void {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code === "Escape") {
-        useSettingsStore.getState().toggleSettings();
+        handleEscape();
+        return;
+      }
+      if (isTypingTarget(e.target)) return;
+
+      const ui = useUiStore.getState();
+      const settingsOpen = useSettingsStore.getState().settingsOpen;
+
+      if (e.code === "KeyI" && !e.repeat && !settingsOpen && !ui.dialogue) {
+        ui.toggleInventory();
         resetInput();
         return;
       }
+
+      const activates = e.code === "KeyE" || ((e.code === "Enter" || e.code === "Space") && !isNativeActivation(e.target));
+      const digit = DIGITS[e.code];
+
+      if (ui.dialogue) {
+        if (e.repeat) return;
+        if (activates) {
+          e.preventDefault();
+          advanceDialogue();
+        } else if (digit !== undefined) {
+          chooseDialogueOption(digit);
+        }
+        return;
+      }
+
+      if (isModalOpen()) return;
+
+      if (activates || digit !== undefined) {
+        if (e.repeat) return;
+        if (activates) e.preventDefault();
+        triggerAction(digit ?? 0);
+        return;
+      }
+
       const action = KEY_MAP[e.code];
       if (!action) return;
-      if (useSettingsStore.getState().settingsOpen) return;
-      if (isTypingTarget(e.target) && action !== "sprint") return;
       e.preventDefault();
       keyboardInput[action] = true;
     };

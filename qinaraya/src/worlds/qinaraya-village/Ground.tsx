@@ -3,9 +3,9 @@ import { villageLayout } from "./villageLayout";
 
 const GRASS = "#86a864";
 
-/** Tanah, jalan, plaza, dan petak kebun. Lapisan ditumpuk tipis dengan polygonOffset agar tidak berkedip. */
+/** Tanah, jalan, dan plaza. Petak kebun ada di FarmPlots. Lapisan ditumpuk tipis dengan polygonOffset agar tidak berkedip. */
 export function Ground() {
-  const { roads, plaza, gardenPlots, patches } = villageLayout;
+  const { roads, plaza, patches } = villageLayout;
 
   return (
     <group>
@@ -38,12 +38,6 @@ export function Ground() {
         <meshStandardMaterial color="#dccfa8" polygonOffset polygonOffsetFactor={-3} polygonOffsetUnits={-3} />
       </mesh>
 
-      {gardenPlots.map((p, i) => (
-        <mesh key={`plot-${i}`} position={[p.cx, 0.08, p.cz]}>
-          <boxGeometry args={[p.w, 0.16, p.d]} />
-          <meshStandardMaterial color="#5e4630" flatShading />
-        </mesh>
-      ))}
     </group>
   );
 }

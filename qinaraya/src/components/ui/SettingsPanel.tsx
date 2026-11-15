@@ -1,6 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { gameConfig } from "../../config/gameConfig";
+import { startNewGame } from "../../stores/persistence";
+import { useClockStore } from "../../stores/useClockStore";
 import { useSettingsStore } from "../../stores/useSettingsStore";
+import { gameClock } from "../../systems/time/gameClockInstance";
 
 const { sensitivityMin, sensitivityMax } = gameConfig.settings;
 
@@ -28,11 +31,14 @@ export function SettingsPanel() {
   const gearRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const wasOpen = useRef(false);
+  const speed = useClockStore((s) => s.state.speedMultiplier);
+  const [confirmReset, setConfirmReset] = useState(false);
 
   useEffect(() => {
     if (open) closeRef.current?.focus();
     else if (wasOpen.current) gearRef.current?.focus();
     wasOpen.current = open;
+    if (!open) setConfirmReset(false);
   }, [open]);
 
   return (
@@ -97,10 +103,51 @@ export function SettingsPanel() {
               Tampilkan FPS
             </label>
 
+            <h3 className="mb-1 text-sm font-semibold">Kecepatan waktu (untuk uji)</h3>
+            <div className="mb-5 flex gap-2" role="group" aria-label="Kecepatan waktu">
+              {gameConfig.clock.speedOptions.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  aria-pressed={speed === option}
+                  onClick={() => gameClock.setSpeedMultiplier(option)}
+                  className="min-h-11 flex-1 rounded-xl text-base font-semibold"
+                  style={{
+                    background: speed === option ? "var(--qin-moss)" : "rgba(230, 216, 180, 0.12)",
+                    color: speed === option ? "var(--qin-night)" : "var(--qin-sand)",
+                  }}
+                >
+                  {option}x
+                </button>
+              ))}
+            </div>
+
             <h3 className="mb-1 text-sm font-semibold">Kontrol</h3>
             <p className="mb-1 text-sm opacity-80">Keyboard: WASD atau tombol panah untuk berjalan, Shift untuk berlari.</p>
             <p className="mb-1 text-sm opacity-80">Mouse: seret untuk memutar kamera, roda untuk zoom.</p>
-            <p className="mb-5 text-sm opacity-80">Layar sentuh: joystick kiri untuk berjalan, geser layar untuk memutar kamera, cubit untuk zoom.</p>
+            <p className="mb-1 text-sm opacity-80">Interaksi: E atau Enter untuk aksi utama, angka 1 sampai 4 untuk pilihan lain, I untuk tas.</p>
+            <p className="mb-5 text-sm opacity-80">Layar sentuh: joystick kiri untuk berjalan, geser layar untuk memutar kamera, cubit untuk zoom, ketuk tombol aksi di kanan bawah.</p>
+
+            <h3 className="mb-1 text-sm font-semibold">Permainan</h3>
+            <p className="mb-2 text-sm opacity-80">Kemajuan tersimpan otomatis di perangkat ini.</p>
+            <button
+              type="button"
+              onClick={() => {
+                if (!confirmReset) {
+                  setConfirmReset(true);
+                  return;
+                }
+                startNewGame();
+                useSettingsStore.getState().setSettingsOpen(false);
+              }}
+              className="mb-5 min-h-11 w-full rounded-xl text-base font-semibold"
+              style={{
+                background: confirmReset ? "#d9784a" : "rgba(230, 216, 180, 0.12)",
+                color: confirmReset ? "var(--qin-night)" : "var(--qin-sand)",
+              }}
+            >
+              {confirmReset ? "Yakin? Semua kemajuan akan dihapus" : "Mulai game baru"}
+            </button>
 
             <button
               ref={closeRef}

@@ -1,19 +1,32 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Group, Mesh } from "three";
+import type { Accessory, CharacterPalette } from "../../data/npcs";
 import { playerState } from "../../systems/player/playerState";
 
-const TUNIC = "#d9784a";
-const PANTS = "#5b4a3a";
-const SKIN = "#f0c8a0";
-const HAIR = "#3a2a20";
-const BAG = "#c9a05a";
+export const PLAYER_PALETTE: CharacterPalette = {
+  tunic: "#d9784a",
+  pants: "#5b4a3a",
+  hair: "#3a2a20",
+  skin: "#f0c8a0",
+  bag: "#c9a05a",
+};
+
+const playerSpeed = () => Math.hypot(playerState.vx, playerState.vz);
+const idleSpeed = () => 0;
+
+interface CharacterModelProps {
+  palette?: CharacterPalette;
+  accessory?: Accessory;
+  /** Sumber kecepatan untuk animasi jalan. NPC diam memakai idle. */
+  getSpeed?: () => number;
+}
 
 /**
  * Karakter placeholder bergaya stylized (kepala besar, proporsi ramah anak).
  * Model menghadap +Z. Animasi jalan dihitung dari kecepatan nyata, bukan input.
  */
-export function CharacterModel() {
+export function CharacterModel({ palette = PLAYER_PALETTE, accessory = "none", getSpeed = playerSpeed }: CharacterModelProps) {
   const bodyRef = useRef<Group>(null);
   const torsoRef = useRef<Mesh>(null);
   const legL = useRef<Group>(null);
@@ -21,11 +34,11 @@ export function CharacterModel() {
   const armL = useRef<Group>(null);
   const armR = useRef<Group>(null);
   const phase = useRef(0);
-  const idleTime = useRef(0);
+  const idleTime = useRef(Math.random() * 6);
 
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.05);
-    const speed = Math.hypot(playerState.vx, playerState.vz);
+    const speed = getSpeed();
     phase.current += dt * speed * 2.4;
     idleTime.current += dt;
 
@@ -50,58 +63,52 @@ export function CharacterModel() {
       </mesh>
 
       <group ref={bodyRef} scale={0.85}>
-        <group ref={legL} position={[-0.13, 0.5, 0]}>
-          <mesh position={[0, -0.24, 0]}>
-            <capsuleGeometry args={[0.1, 0.28, 4, 8]} />
-            <meshStandardMaterial color={PANTS} flatShading />
-          </mesh>
-        </group>
-        <group ref={legR} position={[0.13, 0.5, 0]}>
-          <mesh position={[0, -0.24, 0]}>
-            <capsuleGeometry args={[0.1, 0.28, 4, 8]} />
-            <meshStandardMaterial color={PANTS} flatShading />
-          </mesh>
-        </group>
+        {[
+          { ref: legL, x: -0.13 },
+          { ref: legR, x: 0.13 },
+        ].map((leg) => (
+          <group key={leg.x} ref={leg.ref} position={[leg.x, 0.5, 0]}>
+            <mesh position={[0, -0.24, 0]}>
+              <capsuleGeometry args={[0.1, 0.28, 4, 8]} />
+              <meshStandardMaterial color={palette.pants} flatShading />
+            </mesh>
+          </group>
+        ))}
 
         <mesh ref={torsoRef} position={[0, 0.82, 0]}>
           <capsuleGeometry args={[0.23, 0.22, 4, 10]} />
-          <meshStandardMaterial color={TUNIC} flatShading />
+          <meshStandardMaterial color={palette.tunic} flatShading />
         </mesh>
 
-        <group ref={armL} position={[-0.31, 1.05, 0]}>
-          <mesh position={[0, -0.2, 0]}>
-            <capsuleGeometry args={[0.07, 0.24, 4, 8]} />
-            <meshStandardMaterial color={TUNIC} flatShading />
-          </mesh>
-          <mesh position={[0, -0.42, 0]}>
-            <sphereGeometry args={[0.085, 10, 8]} />
-            <meshStandardMaterial color={SKIN} flatShading />
-          </mesh>
-        </group>
-        <group ref={armR} position={[0.31, 1.05, 0]}>
-          <mesh position={[0, -0.2, 0]}>
-            <capsuleGeometry args={[0.07, 0.24, 4, 8]} />
-            <meshStandardMaterial color={TUNIC} flatShading />
-          </mesh>
-          <mesh position={[0, -0.42, 0]}>
-            <sphereGeometry args={[0.085, 10, 8]} />
-            <meshStandardMaterial color={SKIN} flatShading />
-          </mesh>
-        </group>
+        {[
+          { ref: armL, x: -0.31 },
+          { ref: armR, x: 0.31 },
+        ].map((arm) => (
+          <group key={arm.x} ref={arm.ref} position={[arm.x, 1.05, 0]}>
+            <mesh position={[0, -0.2, 0]}>
+              <capsuleGeometry args={[0.07, 0.24, 4, 8]} />
+              <meshStandardMaterial color={palette.tunic} flatShading />
+            </mesh>
+            <mesh position={[0, -0.42, 0]}>
+              <sphereGeometry args={[0.085, 10, 8]} />
+              <meshStandardMaterial color={palette.skin} flatShading />
+            </mesh>
+          </group>
+        ))}
 
         {/* Tas punggung: penanda visual arah belakang karakter. */}
         <mesh position={[0, 0.85, -0.3]}>
           <boxGeometry args={[0.34, 0.4, 0.16]} />
-          <meshStandardMaterial color={BAG} flatShading />
+          <meshStandardMaterial color={palette.bag} flatShading />
         </mesh>
 
         <mesh position={[0, 1.43, 0]}>
           <sphereGeometry args={[0.3, 16, 12]} />
-          <meshStandardMaterial color={SKIN} flatShading />
+          <meshStandardMaterial color={palette.skin} flatShading />
         </mesh>
         <mesh position={[0, 1.46, -0.01]} rotation={[-0.35, 0, 0]}>
           <sphereGeometry args={[0.32, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.58]} />
-          <meshStandardMaterial color={HAIR} flatShading />
+          <meshStandardMaterial color={palette.hair} flatShading />
         </mesh>
         {[-1, 1].map((side) => (
           <mesh key={side} position={[side * 0.1, 1.44, 0.27]}>
@@ -109,7 +116,22 @@ export function CharacterModel() {
             <meshStandardMaterial color="#2a2220" />
           </mesh>
         ))}
+
+        {accessory === "straw-hat" && (
+          <group position={[0, 1.66, 0]}>
+            <mesh>
+              <cylinderGeometry args={[0.46, 0.46, 0.04, 16]} />
+              <meshStandardMaterial color="#d8b96a" flatShading />
+            </mesh>
+            <mesh position={[0, 0.1, 0]}>
+              <cylinderGeometry args={[0.22, 0.26, 0.2, 12]} />
+              <meshStandardMaterial color="#c9a455" flatShading />
+            </mesh>
+          </group>
+        )}
       </group>
     </group>
   );
 }
+
+export { idleSpeed };
