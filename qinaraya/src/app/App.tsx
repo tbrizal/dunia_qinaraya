@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { GameCanvas } from "../components/game/GameCanvas";
 import { ActionPrompt } from "../components/ui/ActionPrompt";
 import { CameraDragSurface } from "../components/ui/CameraDragSurface";
@@ -6,6 +6,9 @@ import { DialoguePanel } from "../components/ui/DialoguePanel";
 import { ErrorBoundary } from "../components/ui/ErrorBoundary";
 import { FpsLabel } from "../components/ui/FpsLabel";
 import { InventoryPanel } from "../components/ui/InventoryPanel";
+import { LearningPanel } from "../components/ui/LearningPanel";
+import { PrayerNotice } from "../components/ui/PrayerNotice";
+import { TimePanel } from "../components/ui/TimePanel";
 import { LoadingScreen } from "../components/ui/LoadingScreen";
 import { SettingsPanel } from "../components/ui/SettingsPanel";
 import { Toast } from "../components/ui/Toast";
@@ -14,6 +17,9 @@ import { TouchControls } from "../components/ui/TouchControls";
 import { useKeyboardInput } from "../hooks/useKeyboardInput";
 import { connectSystemsToClock, saveGame, startAutosave } from "../stores/persistence";
 import { useAppStore } from "../stores/useAppStore";
+
+// Panel debug hanya ada pada build development; di produksi kode ini dibuang saat build.
+const DevPanel = import.meta.env.DEV ? lazy(() => import("../components/dev/DevPanel")) : null;
 
 export function App() {
   const sceneReady = useAppStore((s) => s.sceneReady);
@@ -49,7 +55,15 @@ export function App() {
         <InventoryPanel />
         <SettingsPanel />
         <DialoguePanel />
+        <TimePanel />
+        <LearningPanel />
+        <PrayerNotice />
         <Toast />
+        {DevPanel && (
+          <Suspense fallback={null}>
+            <DevPanel />
+          </Suspense>
+        )}
         {!sceneReady && <LoadingScreen />}
       </div>
     </ErrorBoundary>

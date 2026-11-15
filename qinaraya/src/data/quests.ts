@@ -1,12 +1,16 @@
 /** Definisi quest. Progres dihitung dari event aksi pemain (lihat systems/quest). */
 
-export type ObjectiveType = "till" | "plant" | "water" | "harvest";
+import type { ReviewStatus } from "../systems/content/review.ts";
+
+export type ObjectiveType = "till" | "plant" | "water" | "harvest" | "learn" | "clean" | "give";
+
+export type QuestCategory = "farming" | "islamic-learning";
 
 export interface QuestObjectiveDef {
   type: ObjectiveType;
   count: number;
   label: string;
-  /** Opsional: batasi pada tanaman (plant) atau item hasil panen (harvest) tertentu. */
+  /** Opsional: batasi pada tanaman (plant), item hasil panen (harvest), atau id materi (learn). */
   targetId?: string;
 }
 
@@ -19,6 +23,11 @@ export interface QuestDef {
   id: string;
   title: string;
   summary: string;
+  category: QuestCategory;
+  /** Quest bermateri agama berstatus draft sampai ditinjau, dan tersembunyi di produksi. */
+  reviewStatus?: ReviewStatus;
+  /** Quest lain yang harus selesai lebih dulu. */
+  requires?: readonly string[];
   giverNpcId: string;
   /** Petunjuk lokasi pemberi quest, ditampilkan sebelum quest dimulai. */
   startHint: string;
@@ -34,6 +43,7 @@ export const QUESTS: Record<string, QuestDef> = {
     id: "tutorial_farming",
     title: "Kebun Pertama",
     summary: "Belajar bertani dari Pak Hasan: olah tanah, tanam, siram, lalu panen.",
+    category: "farming",
     giverNpcId: "pak-hasan",
     startHint: "Temui Pak Hasan di dekat kebun, barat daya desa.",
     objectives: [
@@ -60,4 +70,13 @@ export function getQuestDef(id: string): QuestDef | undefined {
   return QUESTS[id];
 }
 
-export const QUEST_LIST: readonly QuestDef[] = Object.values(QUESTS);
+/** Array yang sama dipakai semua modul; quest draft ditambahkan saat boot pada build yang mengizinkannya. */
+export const QUEST_LIST: QuestDef[] = Object.values(QUESTS);
+
+export function registerQuests(defs: Record<string, QuestDef>): void {
+  for (const def of Object.values(defs)) {
+    if (QUESTS[def.id]) continue;
+    QUESTS[def.id] = def;
+    QUEST_LIST.push(def);
+  }
+}

@@ -5,7 +5,7 @@ import { useInventoryStore } from "../../stores/useInventoryStore";
 import { useSettingsStore } from "../../stores/useSettingsStore";
 import { useUiStore } from "../../stores/useUiStore";
 
-const CATEGORY_LABEL: Record<ItemCategory, string> = { tool: "Alat", seed: "Benih", crop: "Hasil panen" };
+const CATEGORY_LABEL: Record<ItemCategory, string> = { tool: "Alat", seed: "Benih", crop: "Hasil panen", decor: "Dekorasi" };
 
 function BackpackIcon() {
   return (

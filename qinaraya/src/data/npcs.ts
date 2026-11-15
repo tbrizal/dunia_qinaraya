@@ -1,6 +1,6 @@
 /** Definisi NPC awal. Dialog statis; jadwal dan relasi ditambahkan pada fase berikutnya. */
 
-export type Accessory = "none" | "straw-hat";
+export type Accessory = "none" | "straw-hat" | "peci";
 
 export interface CharacterPalette {
   tunic: string;
@@ -42,6 +42,16 @@ export const NPCS: readonly NpcDef[] = [
     heading: Math.PI / 2,
     palette: { tunic: "#4f8fb5", pants: "#4a4a58", hair: "#6b3f28", skin: "#f0c8a0", bag: "#d9784a" },
     accessory: "none",
+  },
+  {
+    id: "ustadz-harun",
+    name: "Ustadz Harun",
+    role: "Pembimbing desa",
+    x: -2.8,
+    z: -10.2,
+    heading: Math.PI / 2,
+    palette: { tunic: "#e8e0c8", pants: "#4a4a58", hair: "#cfcfc8", skin: "#d9a87a", bag: "#8a6a44" },
+    accessory: "peci",
   },
 ];
 

@@ -3,6 +3,7 @@ import { computeTargetView, runAction } from "../../stores/gameActions";
 import { useFarmStore } from "../../stores/useFarmStore";
 import { useInteractionStore } from "../../stores/useInteractionStore";
 import { useInventoryStore } from "../../stores/useInventoryStore";
+import { useLearningStore } from "../../stores/useLearningStore";
 import { useSettingsStore } from "../../stores/useSettingsStore";
 import { useUiStore } from "../../stores/useUiStore";
 
@@ -14,12 +15,13 @@ export function ActionPrompt() {
   const target = useInteractionStore((s) => s.target);
   const plot = useFarmStore((s) => (target?.kind === "plot" ? s.plots[target.id] : undefined));
   const inventory = useInventoryStore((s) => s.inventory);
+  const learned = useLearningStore((s) => s.learned);
   const showTouch = useSettingsStore((s) => s.showTouchControls);
   const settingsOpen = useSettingsStore((s) => s.settingsOpen);
-  const panelOpen = useUiStore((s) => s.inventoryOpen || s.dialogue !== null);
+  const panelOpen = useUiStore((s) => s.inventoryOpen || s.timePanelOpen || s.dialogue !== null || s.learning !== null);
 
   // plot dan inventory dibaca ulang di computeTargetView; di sini hanya pemicu hitung ulang.
-  const view = useMemo(() => computeTargetView(target), [target, plot, inventory]);
+  const view = useMemo(() => computeTargetView(target), [target, plot, inventory, learned]);
 
   if (!view || settingsOpen || panelOpen) return null;
 

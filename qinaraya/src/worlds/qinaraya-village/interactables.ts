@@ -1,4 +1,5 @@
 import { NPCS } from "../../data/npcs";
+import { PLACES } from "../../data/places";
 import type { Interactable } from "../../systems/interaction/interactables";
 import { villageLayout } from "./villageLayout";
 
@@ -6,4 +7,5 @@ import { villageLayout } from "./villageLayout";
 export const villageInteractables: readonly Interactable[] = [
   ...villageLayout.gardenPlots.map((p) => ({ kind: "plot" as const, id: p.id, cx: p.cx, cz: p.cz, w: p.w, d: p.d })),
   ...NPCS.map((n) => ({ kind: "npc" as const, id: n.id, x: n.x, z: n.z })),
+  ...PLACES.map((p) => ({ kind: "poi" as const, id: p.id, x: p.x, z: p.z })),
 ];

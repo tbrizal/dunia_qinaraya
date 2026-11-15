@@ -100,3 +100,22 @@ export function addAll(inv: InventoryState, grants: readonly ItemGrantLike[]): I
   for (const g of grants) current = addItem(current, g.itemId, g.quantity).inventory;
   return current;
 }
+
+/** Mengambil `quantity` item dari salah satu id pada daftar (berurutan). Null bila tidak cukup. */
+export function removeAnyOf(inv: InventoryState, itemIds: readonly string[], quantity: number): InventoryState | null {
+  const need = Math.floor(quantity);
+  if (need <= 0) return null;
+  const total = itemIds.reduce((sum, id) => sum + countItem(inv, id), 0);
+  if (total < need) return null;
+
+  let current = inv;
+  let remaining = need;
+  for (const id of itemIds) {
+    const take = Math.min(countItem(current, id), remaining);
+    if (take <= 0) continue;
+    current = removeItem(current, id, take) ?? current;
+    remaining -= take;
+    if (remaining === 0) break;
+  }
+  return current;
+}

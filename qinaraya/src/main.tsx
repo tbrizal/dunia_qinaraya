@@ -4,11 +4,22 @@ import "./index.css";
 import { App } from "./app/App";
 import { bootstrapGame } from "./stores/persistence";
 
-// Muat save (atau mulai game baru) sebelum render pertama agar semua store sudah terisi.
-bootstrapGame();
+async function boot(): Promise<void> {
+  // Konten yang belum ditinjau dimuat hanya bila build mengizinkan. Pada build produksi nilai
+  // __ALLOW_UNREVIEWED__ adalah false sehingga blok ini, beserta modul draf, dibuang oleh bundler.
+  if (__ALLOW_UNREVIEWED__) {
+    const { registerUnreviewedContent } = await import("./data/unreviewed");
+    registerUnreviewedContent();
+  }
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+  // Muat save (atau mulai game baru) sebelum render pertama agar semua store sudah terisi.
+  bootstrapGame();
+
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}
+
+void boot();

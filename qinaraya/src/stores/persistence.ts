@@ -1,4 +1,7 @@
 import { gameConfig } from "../config/gameConfig";
+import { prayerNoticeConfig, prayerScheduleConfig } from "../config/lifestyleConfig";
+import { PRAYER_LABELS, getPrayerNotifications } from "../systems/prayer/prayerSchedule";
+import { playSoftChime } from "../systems/audio/softChime";
 import { resolveCollisions } from "../systems/movement/collision";
 import { createInventory } from "../systems/inventory/inventory";
 import { playerState, resetPlayerState } from "../systems/player/playerState";
@@ -8,8 +11,10 @@ import { clockConfig, createInitialClockState, gameClock } from "../systems/time
 import { villageLayout } from "../worlds/qinaraya-village/villageLayout";
 import { useFarmStore } from "./useFarmStore";
 import { useInventoryStore } from "./useInventoryStore";
+import { useLearningStore } from "./useLearningStore";
 import { useQuestStore } from "./useQuestStore";
 import { useSettingsStore } from "./useSettingsStore";
+import { useUiStore } from "./useUiStore";
 
 /** Menghubungkan store ke penyimpanan lokal. Aturan format dan validasi ada di systems/save. */
 
@@ -26,7 +31,10 @@ const saveCtx: SaveContext = {
   },
 };
 
-const SAVE_KEY = `${gameConfig.save.key}.v${SAVE_VERSION}`;
+/** Kunci stabil; versi format ada di dalam data (field `version`) dan dimigrasikan saat dibaca. */
+const SAVE_KEY = gameConfig.save.key;
+/** Kunci Phase 2 yang memuat nomor versi. Tetap dibaca agar kemajuan lama tidak hilang. */
+const LEGACY_KEYS = [`${gameConfig.save.key}.v1`];
 const BACKUP_KEY = `${gameConfig.save.key}.backup`;
 
 /** True bila ada save versi lebih baru: jangan menimpanya sampai pemain memilih game baru. */
@@ -54,7 +62,13 @@ export function buildSaveData(): SaveData {
     inventory: useInventoryStore.getState().inventory,
     farm: { plots: Object.values(useFarmStore.getState().plots) },
     quests: useQuestStore.getState().quests,
-    settings: { cameraSensitivity: settings.cameraSensitivity, showFps: settings.showFps },
+    learning: { learned: useLearningStore.getState().learned },
+    settings: {
+      cameraSensitivity: settings.cameraSensitivity,
+      showFps: settings.showFps,
+      prayerNotifications: settings.prayerNotifications,
+      prayerSound: settings.prayerSound,
+    },
   };
 }
 
@@ -73,7 +87,8 @@ function applySaveData(data: SaveData): void {
   useInventoryStore.getState().setInventory(data.inventory);
   useFarmStore.getState().setPlots(data.farm.plots);
   useQuestStore.getState().setQuests(data.quests);
-  useSettingsStore.setState({ cameraSensitivity: data.settings.cameraSensitivity, showFps: data.settings.showFps });
+  useLearningStore.getState().setLearned(data.learning.learned);
+  useSettingsStore.setState({ ...data.settings });
   gameClock.setState({ ...data.clock.state, isPaused: false }, data.clock.accumulator);
 }
 
@@ -83,6 +98,7 @@ function applyNewGame(): void {
   useInventoryStore.setState({ inventory: createInventory(gameConfig.inventory.slots) });
   useFarmStore.getState().reset(saveCtx.plotIds);
   useQuestStore.getState().reset();
+  useLearningStore.getState().reset();
   gameClock.setState(createInitialClockState(), 0);
 }
 
@@ -100,11 +116,30 @@ export function saveGame(): boolean {
 /** Dipanggil sekali sebelum render pertama. Memuat save bila ada, selain itu memulai game baru. */
 export function bootstrapGame(): "loaded" | "new" {
   const storage = getStorage();
-  const raw = storage?.getItem(SAVE_KEY) ?? null;
+  let raw: string | null = null;
+  let fromLegacy = false;
+  if (storage) {
+    try {
+      raw = storage.getItem(SAVE_KEY);
+      if (!raw) {
+        for (const key of LEGACY_KEYS) {
+          raw = storage.getItem(key);
+          if (raw) {
+            fromLegacy = true;
+            break;
+          }
+        }
+      }
+    } catch {
+      raw = null;
+    }
+  }
+
   if (storage && raw) {
     const result = parseSave(raw, saveCtx);
     if (result.ok) {
       applySaveData(result.data);
+      if (fromLegacy) saveGame(); // pindahkan ke kunci baru; kunci lama dibiarkan sebagai cadangan
       return "loaded";
     }
     if (result.reason === "newer-version") {
@@ -139,12 +174,22 @@ export function startAutosave(): () => void {
     useInventoryStore.subscribe(schedule),
     useFarmStore.subscribe((state, prev) => {
       // syncAll mengubah petak tiap menit game; cukup simpan berkala, bukan tiap perubahan kecil.
-      const changed = Object.keys(state.plots).some((id) => state.plots[id]?.status !== prev.plots[id]?.status || state.plots[id]?.cropId !== prev.plots[id]?.cropId);
+      const changed = Object.keys(state.plots).some(
+        (id) => state.plots[id]?.status !== prev.plots[id]?.status || state.plots[id]?.cropId !== prev.plots[id]?.cropId,
+      );
       if (changed) schedule();
     }),
     useQuestStore.subscribe(schedule),
+    useLearningStore.subscribe(schedule),
     useSettingsStore.subscribe((state, prev) => {
-      if (state.cameraSensitivity !== prev.cameraSensitivity || state.showFps !== prev.showFps) schedule();
+      if (
+        state.cameraSensitivity !== prev.cameraSensitivity ||
+        state.showFps !== prev.showFps ||
+        state.prayerNotifications !== prev.prayerNotifications ||
+        state.prayerSound !== prev.prayerSound
+      ) {
+        schedule();
+      }
     }),
   ];
 
@@ -167,12 +212,20 @@ export function startAutosave(): () => void {
   };
 }
 
-/** Menghubungkan Game Clock ke modul lain: satu langganan pusat, tanpa timer per tanaman. */
+/** Menghubungkan Game Clock ke modul lain: satu langganan pusat, tanpa timer per tanaman atau per notifikasi. */
 export function connectSystemsToClock(): () => void {
   useFarmStore.getState().syncAll(gameClock.getTotalMinutes());
   return gameClock.subscribe((event) => {
     if (event.minutesAdvanced > 0 || event.type === "set") {
       useFarmStore.getState().syncAll(event.totalMinutes);
     }
+
+    // Pengingat waktu salat simulasi: lembut, sekali per kejadian, dan tidak ada konsekuensi bila diabaikan.
+    const settings = useSettingsStore.getState();
+    if (!settings.prayerNotifications) return;
+    const [notice] = getPrayerNotifications(event, prayerScheduleConfig, prayerNoticeConfig.maxJumpMinutes);
+    if (!notice) return;
+    useUiStore.getState().showPrayerNotice(`Waktu ${PRAYER_LABELS[notice.prayer]} telah tiba di Qinaraya`);
+    if (settings.prayerSound) playSoftChime();
   });
 }

@@ -3,7 +3,7 @@ import type { DialogueEffect } from "../data/dialogues";
 import { renderDialogueText, selectEntryNode } from "../systems/dialogue/dialogue";
 import { gameClock } from "../systems/time/gameClockInstance";
 import { getTimeOfDay } from "../systems/time/timeOfDay";
-import { completeQuestWithRewards, startQuestWithItems } from "./gameActions";
+import { completeQuestWithRewards, donateCrops, startQuestWithItems } from "./gameActions";
 import { useQuestStore } from "./useQuestStore";
 import { useUiStore } from "./useUiStore";
 
@@ -29,7 +29,8 @@ export function getDialogueView(npcId: string, nodeId: string): DialogueView | n
 
 function applyEffect(effect: DialogueEffect): boolean {
   if (effect.type === "startQuest") return startQuestWithItems(effect.questId);
-  return completeQuestWithRewards(effect.questId);
+  if (effect.type === "completeQuest") return completeQuestWithRewards(effect.questId);
+  return donateCrops(effect.quantity);
 }
 
 export function startDialogue(npcId: string): void {

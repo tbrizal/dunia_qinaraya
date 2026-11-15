@@ -9,7 +9,7 @@ export function TargetMarker() {
   const found = target ? villageInteractables.find((i) => i.kind === target.kind && i.id === target.id) : undefined;
   if (!found) return null;
 
-  if (found.kind === "npc") {
+  if (found.kind !== "plot") {
     return (
       <mesh position={[found.x, 0.06, found.z]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.7, 0.85, 28]} />

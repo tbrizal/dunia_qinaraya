@@ -1,13 +1,23 @@
-import type { NpcDialogue } from "../../data/dialogues.ts";
+import type { DialogueCondition, DialogueEntry, NpcDialogue } from "../../data/dialogues.ts";
+import { isVisible } from "../content/review.ts";
 import { getStatus } from "../quest/questEngine.ts";
 import type { QuestState } from "../quest/questEngine.ts";
 import type { TimeOfDay } from "../time/timeOfDay.ts";
 
-/** Memilih node awal: entri pertama yang syarat quest-nya terpenuhi. */
-export function selectEntryNode(dialogue: NpcDialogue, quests: QuestState): string {
+function matches(entry: DialogueEntry, quests: QuestState): boolean {
+  if (!entry.when) return true;
+  const conditions: readonly DialogueCondition[] = Array.isArray(entry.when) ? entry.when : [entry.when as DialogueCondition];
+  return conditions.every((c) => c.status.includes(getStatus(quests, c.questId)));
+}
+
+/**
+ * Memilih node awal: entri pertama yang syarat quest-nya terpenuhi dan boleh tampil.
+ * Entri bermateri agama yang belum ditinjau dilewati di build produksi.
+ */
+export function selectEntryNode(dialogue: NpcDialogue, quests: QuestState, allowUnreviewed?: boolean): string {
   for (const entry of dialogue.entries) {
-    if (!entry.when) return entry.node;
-    if (entry.when.status.includes(getStatus(quests, entry.when.questId))) return entry.node;
+    if (!isVisible(entry.reviewStatus, allowUnreviewed)) continue;
+    if (matches(entry, quests)) return entry.node;
   }
   const fallback = dialogue.entries[dialogue.entries.length - 1];
   if (!fallback) throw new Error(`Dialog ${dialogue.npcId} tidak punya entri`);

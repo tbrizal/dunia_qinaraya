@@ -6,30 +6,49 @@ export interface ActiveDialogue {
   nodeId: string;
 }
 
+export interface ActiveLearning {
+  contentId: string;
+  page: number;
+}
+
 interface UiStore {
   inventoryOpen: boolean;
+  timePanelOpen: boolean;
   dialogue: ActiveDialogue | null;
+  learning: ActiveLearning | null;
   toast: { id: number; text: string } | null;
+  prayerNotice: { id: number; text: string } | null;
   setInventoryOpen: (open: boolean) => void;
   toggleInventory: () => void;
+  setTimePanelOpen: (open: boolean) => void;
   setDialogue: (dialogue: ActiveDialogue | null) => void;
+  setLearning: (learning: ActiveLearning | null) => void;
   showToast: (text: string) => void;
+  showPrayerNotice: (text: string) => void;
 }
 
 let toastCounter = 0;
 
 export const useUiStore = create<UiStore>((set) => ({
   inventoryOpen: false,
+  timePanelOpen: false,
   dialogue: null,
+  learning: null,
   toast: null,
+  prayerNotice: null,
   setInventoryOpen: (open) => set({ inventoryOpen: open }),
   toggleInventory: () => set((s) => ({ inventoryOpen: !s.inventoryOpen })),
+  setTimePanelOpen: (open) => set({ timePanelOpen: open }),
   setDialogue: (dialogue) => set({ dialogue }),
+  setLearning: (learning) => set({ learning }),
   showToast: (text) => set({ toast: { id: ++toastCounter, text } }),
+  showPrayerNotice: (text) => set({ prayerNotice: { id: ++toastCounter, text } }),
 }));
 
 /** Saat ada panel terbuka, gerakan dan waktu dunia dijeda. */
 export function isModalOpen(): boolean {
   const ui = useUiStore.getState();
-  return useSettingsStore.getState().settingsOpen || ui.inventoryOpen || ui.dialogue !== null;
+  return (
+    useSettingsStore.getState().settingsOpen || ui.inventoryOpen || ui.timePanelOpen || ui.dialogue !== null || ui.learning !== null
+  );
 }

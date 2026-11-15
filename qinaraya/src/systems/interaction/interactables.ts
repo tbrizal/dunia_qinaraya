@@ -2,7 +2,8 @@
 
 export type PlotInteractable = { kind: "plot"; id: string; cx: number; cz: number; w: number; d: number };
 export type NpcInteractable = { kind: "npc"; id: string; x: number; z: number };
-export type Interactable = PlotInteractable | NpcInteractable;
+export type PoiInteractable = { kind: "poi"; id: string; x: number; z: number };
+export type Interactable = PlotInteractable | NpcInteractable | PoiInteractable;
 
 export interface TargetRef {
   kind: Interactable["kind"];
@@ -12,11 +13,12 @@ export interface TargetRef {
 export interface InteractionRanges {
   plotRange: number;
   npcRange: number;
+  poiRange: number;
 }
 
 /** Jarak ke tepi petak (0 bila di dalam), atau ke pusat NPC. */
 export function distanceToInteractable(target: Interactable, px: number, pz: number): number {
-  if (target.kind === "npc") return Math.hypot(px - target.x, pz - target.z);
+  if (target.kind === "npc" || target.kind === "poi") return Math.hypot(px - target.x, pz - target.z);
   const dx = Math.max(Math.abs(px - target.cx) - target.w / 2, 0);
   const dz = Math.max(Math.abs(pz - target.cz) - target.d / 2, 0);
   return Math.hypot(dx, dz);
@@ -35,7 +37,7 @@ export function findNearestInteractable(
   let best: Interactable | null = null;
   let bestScore = Infinity;
   for (const target of targets) {
-    const range = target.kind === "npc" ? ranges.npcRange : ranges.plotRange;
+    const range = target.kind === "npc" ? ranges.npcRange : target.kind === "poi" ? ranges.poiRange : ranges.plotRange;
     const distance = distanceToInteractable(target, px, pz);
     if (distance > range) continue;
     const score = distance / range;

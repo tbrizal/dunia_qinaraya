@@ -1,5 +1,6 @@
 import { getCropDef } from "../../data/crops.ts";
 import { getItemDef } from "../../data/items.ts";
+import { LEARNING_CONTENT } from "../../data/learning.ts";
 import { getQuestDef, QUEST_LIST } from "../../data/quests.ts";
 import { PLOT_STATUSES, createPlot } from "../farming/farmPlot.ts";
 import type { FarmPlot, PlotStatus } from "../farming/farmPlot.ts";
@@ -14,7 +15,7 @@ import type { ClockConfig, GameClockState } from "../time/gameClock.ts";
  * Setiap perubahan struktur menaikkan SAVE_VERSION dan menambah fungsi di `migrations`.
  */
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 export interface SaveData {
   version: number;
@@ -25,7 +26,9 @@ export interface SaveData {
   inventory: InventoryState;
   farm: { plots: FarmPlot[] };
   quests: QuestState;
-  settings: { cameraSensitivity: number; showFps: boolean };
+  /** Id materi edukasi yang sudah selesai dibaca. Hanya catatan belajar, bukan skor. */
+  learning: { learned: string[] };
+  settings: { cameraSensitivity: number; showFps: boolean; prayerNotifications: boolean; prayerSound: boolean };
 }
 
 export interface SaveContext {
@@ -43,8 +46,15 @@ export type ParseResult =
 
 type Migration = (data: Record<string, unknown>) => Record<string, unknown>;
 
-/** migrations[n] mengubah data versi n menjadi versi n+1. Kosong karena baru ada versi 1. */
-const migrations: Record<number, Migration> = {};
+/** migrations[n] mengubah data versi n menjadi versi n+1. */
+const migrations: Record<number, Migration> = {
+  // v1 (Phase 2) -> v2 (Phase 3): menambah catatan materi yang dipelajari dan preferensi notifikasi.
+  1: (data) => ({
+    ...data,
+    learning: { learned: [] },
+    settings: { ...(isRecord(data.settings) ? data.settings : {}), prayerNotifications: true, prayerSound: false },
+  }),
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -136,6 +146,14 @@ function sanitizeQuests(raw: unknown): QuestState {
   return result;
 }
 
+function sanitizeLearning(raw: unknown): string[] {
+  const list = isRecord(raw) && Array.isArray(raw.learned) ? raw.learned : [];
+  const known = new Set(LEARNING_CONTENT.map((c) => c.id));
+  const result: string[] = [];
+  for (const id of list) if (typeof id === "string" && known.has(id) && !result.includes(id)) result.push(id);
+  return result;
+}
+
 export function parseSave(raw: string, ctx: SaveContext): ParseResult {
   let parsed: unknown;
   try {
@@ -178,9 +196,12 @@ export function parseSave(raw: string, ctx: SaveContext): ParseResult {
       inventory: sanitizeInventory(data.inventory, ctx),
       farm: { plots: sanitizePlots(data.farm, ctx) },
       quests: sanitizeQuests(data.quests),
+      learning: { learned: sanitizeLearning(data.learning) },
       settings: {
         cameraSensitivity: Math.min(max, Math.max(min, num(settings.cameraSensitivity, ctx.sensitivity.default))),
         showFps: settings.showFps === true,
+        prayerNotifications: settings.prayerNotifications !== false,
+        prayerSound: settings.prayerSound === true,
       },
     },
   };

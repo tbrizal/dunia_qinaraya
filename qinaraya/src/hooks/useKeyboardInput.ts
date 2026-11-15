@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { advanceDialogue, chooseDialogueOption, closeDialogue } from "../stores/dialogueActions";
+import { closeLearning, learningNext } from "../stores/learningActions";
 import { triggerAction } from "../stores/gameActions";
 import { useSettingsStore } from "../stores/useSettingsStore";
 import { isModalOpen, useUiStore } from "../stores/useUiStore";
@@ -34,6 +35,8 @@ function isNativeActivation(target: EventTarget | null): boolean {
 function handleEscape(): void {
   const ui = useUiStore.getState();
   if (ui.dialogue) closeDialogue();
+  else if (ui.learning) closeLearning();
+  else if (ui.timePanelOpen) ui.setTimePanelOpen(false);
   else if (ui.inventoryOpen) ui.setInventoryOpen(false);
   else useSettingsStore.getState().toggleSettings();
   resetInput();
@@ -41,7 +44,7 @@ function handleEscape(): void {
 
 /**
  * Menghubungkan keyboard ke game.
- * Gerak: WASD/panah, Shift. Aksi: E atau Enter (utama), 1-4 (pilihan aksi), I (tas), Esc (tutup/pengaturan).
+ * Gerak: WASD/panah, Shift. Aksi: E atau Enter (utama), 1-4 (pilihan aksi), I (tas), T (kalender dan jadwal), Esc (tutup/pengaturan).
  */
 export function useKeyboardInput(): void {
   useEffect(() => {
@@ -55,14 +58,29 @@ export function useKeyboardInput(): void {
       const ui = useUiStore.getState();
       const settingsOpen = useSettingsStore.getState().settingsOpen;
 
-      if (e.code === "KeyI" && !e.repeat && !settingsOpen && !ui.dialogue) {
+      const otherPanel = settingsOpen || ui.dialogue !== null || ui.learning !== null;
+
+      if (e.code === "KeyI" && !e.repeat && !otherPanel && !ui.timePanelOpen) {
         ui.toggleInventory();
+        resetInput();
+        return;
+      }
+      if (e.code === "KeyT" && !e.repeat && !otherPanel && !ui.inventoryOpen) {
+        ui.setTimePanelOpen(!ui.timePanelOpen);
         resetInput();
         return;
       }
 
       const activates = e.code === "KeyE" || ((e.code === "Enter" || e.code === "Space") && !isNativeActivation(e.target));
       const digit = DIGITS[e.code];
+
+      if (ui.learning) {
+        if (!e.repeat && activates) {
+          e.preventDefault();
+          learningNext();
+        }
+        return;
+      }
 
       if (ui.dialogue) {
         if (e.repeat) return;

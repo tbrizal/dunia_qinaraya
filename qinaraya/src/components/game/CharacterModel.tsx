@@ -117,6 +117,13 @@ export function CharacterModel({ palette = PLAYER_PALETTE, accessory = "none", g
           </mesh>
         ))}
 
+        {accessory === "peci" && (
+          <mesh position={[0, 1.7, 0]}>
+            <cylinderGeometry args={[0.24, 0.27, 0.2, 14]} />
+            <meshStandardMaterial color="#2b2b30" flatShading />
+          </mesh>
+        )}
+
         {accessory === "straw-hat" && (
           <group position={[0, 1.66, 0]}>
             <mesh>

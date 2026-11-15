@@ -1,6 +1,6 @@
 /** Definisi item. Data murni: UI dan logic hanya membaca dari sini. */
 
-export type ItemCategory = "tool" | "seed" | "crop";
+export type ItemCategory = "tool" | "seed" | "crop" | "decor";
 
 export interface ItemDef {
   id: string;
@@ -86,6 +86,33 @@ export const ITEMS: Record<string, ItemDef> = {
     icon: "🥔",
     color: "#b89463",
     maxStack: 99,
+  },
+  lantern: {
+    id: "lantern",
+    name: "Lentera desa",
+    description: "Hiasan lentera kayu yang hangat. Untuk dekorasi rumah pada fase berikutnya.",
+    category: "decor",
+    icon: "🏮",
+    color: "#c9803a",
+    maxStack: 9,
+  },
+  flower_pot: {
+    id: "flower_pot",
+    name: "Pot bunga",
+    description: "Pot tanaman kecil yang menyegarkan sudut rumah.",
+    category: "decor",
+    icon: "🪴",
+    color: "#6f9a5e",
+    maxStack: 9,
+  },
+  wooden_bench: {
+    id: "wooden_bench",
+    name: "Bangku kayu",
+    description: "Bangku sederhana untuk duduk santai di halaman.",
+    category: "decor",
+    icon: "🪑",
+    color: "#8a6a44",
+    maxStack: 9,
   },
 };
 

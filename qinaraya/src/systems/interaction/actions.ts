@@ -1,6 +1,8 @@
 import { CROP_LIST, getCropDef } from "../../data/crops.ts";
 import { getItemDef } from "../../data/items.ts";
+import { getVisibleLearningContent } from "../../data/learning.ts";
 import { getNpcDef } from "../../data/npcs.ts";
+import { getPlaceDef } from "../../data/places.ts";
 import { isWet, getGrowthProgress } from "../farming/farmPlot.ts";
 import type { FarmPlot } from "../farming/farmPlot.ts";
 import { canAdd, hasItem } from "../inventory/inventory.ts";
@@ -88,6 +90,35 @@ export function describeNpc(npcId: string): TargetView | null {
     title: npc.name,
     status: npc.role,
     actions: [{ id: "talk", label: `Bicara dengan ${npc.name}`, enabled: true }],
+  };
+}
+
+/**
+ * Lokasi (masjid, musala, tempat wudu). Materi yang belum boleh tampil di build ini tidak
+ * muncul sebagai aksi. Mengembalikan null bila lokasi tidak punya aksi sama sekali.
+ */
+export function describePoi(placeId: string, learned: readonly string[], allowUnreviewed?: boolean): TargetView | null {
+  const place = getPlaceDef(placeId);
+  if (!place) return null;
+
+  const actions: ActionOption[] = [];
+  let shown = 0;
+  let done = 0;
+  for (const contentId of place.contentIds) {
+    const content = getVisibleLearningContent(contentId, allowUnreviewed);
+    if (!content) continue;
+    shown++;
+    const isDone = learned.includes(contentId);
+    if (isDone) done++;
+    actions.push({ id: `learn:${contentId}`, label: isDone ? `${content.shortTitle} (sudah)` : content.shortTitle, enabled: true });
+  }
+  if (place.activities.includes("clean")) actions.push({ id: "clean", label: "Bersihkan halaman", enabled: true });
+  if (actions.length === 0) return null;
+
+  return {
+    title: place.name,
+    status: shown > 0 ? `${place.blurb}. Dipelajari ${done}/${shown}` : place.blurb,
+    actions,
   };
 }
 

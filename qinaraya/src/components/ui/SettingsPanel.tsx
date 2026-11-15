@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { gameConfig } from "../../config/gameConfig";
 import { startNewGame } from "../../stores/persistence";
+import { playSoftChime } from "../../systems/audio/softChime";
 import { useClockStore } from "../../stores/useClockStore";
 import { useSettingsStore } from "../../stores/useSettingsStore";
 import { gameClock } from "../../systems/time/gameClockInstance";
@@ -27,6 +28,10 @@ export function SettingsPanel() {
   const setShowTouch = useSettingsStore((s) => s.setShowTouchControls);
   const showFps = useSettingsStore((s) => s.showFps);
   const setShowFps = useSettingsStore((s) => s.setShowFps);
+  const prayerNotifications = useSettingsStore((s) => s.prayerNotifications);
+  const setPrayerNotifications = useSettingsStore((s) => s.setPrayerNotifications);
+  const prayerSound = useSettingsStore((s) => s.prayerSound);
+  const setPrayerSound = useSettingsStore((s) => s.setPrayerSound);
 
   const gearRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -103,6 +108,31 @@ export function SettingsPanel() {
               Tampilkan FPS
             </label>
 
+            <h3 className="mb-1 text-sm font-semibold">Pengingat waktu salat (simulasi)</h3>
+            <label className="mb-1 flex min-h-11 items-center gap-3 text-sm">
+              <input
+                type="checkbox"
+                className="h-5 w-5 accent-[#7a9a5b]"
+                checked={prayerNotifications}
+                onChange={(e) => setPrayerNotifications(e.target.checked)}
+              />
+              Tampilkan pengingat lembut
+            </label>
+            <label className="mb-1 flex min-h-11 items-center gap-3 text-sm">
+              <input
+                type="checkbox"
+                className="h-5 w-5 accent-[#7a9a5b]"
+                checked={prayerSound}
+                disabled={!prayerNotifications}
+                onChange={(e) => {
+                  setPrayerSound(e.target.checked);
+                  if (e.target.checked) playSoftChime();
+                }}
+              />
+              Bunyi denting lembut
+            </label>
+            <p className="mb-5 text-xs opacity-70">Pengingat hanya membantu mengenal waktu. Tidak ada hukuman bila diabaikan.</p>
+
             <h3 className="mb-1 text-sm font-semibold">Kecepatan waktu (untuk uji)</h3>
             <div className="mb-5 flex gap-2" role="group" aria-label="Kecepatan waktu">
               {gameConfig.clock.speedOptions.map((option) => (
@@ -125,7 +155,7 @@ export function SettingsPanel() {
             <h3 className="mb-1 text-sm font-semibold">Kontrol</h3>
             <p className="mb-1 text-sm opacity-80">Keyboard: WASD atau tombol panah untuk berjalan, Shift untuk berlari.</p>
             <p className="mb-1 text-sm opacity-80">Mouse: seret untuk memutar kamera, roda untuk zoom.</p>
-            <p className="mb-1 text-sm opacity-80">Interaksi: E atau Enter untuk aksi utama, angka 1 sampai 4 untuk pilihan lain, I untuk tas.</p>
+            <p className="mb-1 text-sm opacity-80">Interaksi: E atau Enter untuk aksi utama, angka 1 sampai 4 untuk pilihan lain, I untuk tas, T untuk kalender dan jadwal.</p>
             <p className="mb-5 text-sm opacity-80">Layar sentuh: joystick kiri untuk berjalan, geser layar untuk memutar kamera, cubit untuk zoom, ketuk tombol aksi di kanan bawah.</p>
 
             <h3 className="mb-1 text-sm font-semibold">Permainan</h3>

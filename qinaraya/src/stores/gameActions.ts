@@ -1,17 +1,19 @@
 import { gameConfig } from "../config/gameConfig";
 import { getCropDef } from "../data/crops";
-import { getItemDef } from "../data/items";
+import { ITEMS, getItemDef } from "../data/items";
 import { getNpcDef } from "../data/npcs";
 import { getQuestDef } from "../data/quests";
 import { harvestPlot, plantCrop, syncPlot, tillPlot, waterPlot } from "../systems/farming/farmPlot";
-import { describeNpc, describePlot } from "../systems/interaction/actions";
+import { describeNpc, describePlot, describePoi } from "../systems/interaction/actions";
 import type { TargetView } from "../systems/interaction/actions";
 import type { TargetRef } from "../systems/interaction/interactables";
-import { addAll, addItem, canAddAll, removeItem } from "../systems/inventory/inventory";
+import { addAll, addItem, canAddAll, removeAnyOf, removeItem } from "../systems/inventory/inventory";
 import { applyEvent, completeQuest, startQuest } from "../systems/quest/questEngine";
 import type { QuestEvent } from "../systems/quest/questEngine";
 import { gameClock } from "../systems/time/gameClockInstance";
 import { startDialogue } from "./dialogueActions";
+import { openLearning } from "./learningActions";
+import { useLearningStore } from "./useLearningStore";
 import { useFarmStore } from "./useFarmStore";
 import { useInteractionStore } from "./useInteractionStore";
 import { useInventoryStore } from "./useInventoryStore";
@@ -28,6 +30,7 @@ const toast = (text: string) => useUiStore.getState().showToast(text);
 export function computeTargetView(target: TargetRef | null): TargetView | null {
   if (!target) return null;
   if (target.kind === "npc") return describeNpc(target.id);
+  if (target.kind === "poi") return describePoi(target.id, useLearningStore.getState().learned);
   const plot = useFarmStore.getState().plots[target.id];
   return plot ? describePlot(plot, useInventoryStore.getState().inventory) : null;
 }
@@ -80,6 +83,23 @@ export function completeQuestWithRewards(questId: string): boolean {
   return true;
 }
 
+/** Membagikan hasil panen apa pun dari tas (kegiatan berbagi). Mengembalikan false bila tidak cukup. */
+export function donateCrops(quantity: number): boolean {
+  const store = useInventoryStore.getState();
+  const cropIds = Object.values(ITEMS)
+    .filter((item) => item.category === "crop")
+    .map((item) => item.id);
+  const next = removeAnyOf(store.inventory, cropIds, quantity);
+  if (!next) {
+    toast("Hasil panenmu belum cukup. Panen dulu ya.");
+    return false;
+  }
+  store.setInventory(next);
+  toast("Hasil panen dibagikan ke dapur warga");
+  recordQuestEvent({ type: "give", quantity });
+  return true;
+}
+
 /** Menjalankan satu aksi pada target saat ini. Dipakai tombol layar dan keyboard. */
 export function runAction(actionId: string): void {
   if (isModalOpen()) return;
@@ -88,6 +108,17 @@ export function runAction(actionId: string): void {
 
   if (target.kind === "npc") {
     if (actionId === "talk") startDialogue(target.id);
+    return;
+  }
+
+  if (target.kind === "poi") {
+    const option = computeTargetView(target)?.actions.find((a) => a.id === actionId);
+    if (!option?.enabled) return;
+    if (actionId.startsWith("learn:")) openLearning(actionId.slice("learn:".length));
+    else if (actionId === "clean") {
+      toast("Halaman masjid makin bersih. Terima kasih sudah membantu!");
+      recordQuestEvent({ type: "clean" });
+    }
     return;
   }
 

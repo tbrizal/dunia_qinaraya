@@ -1,3 +1,4 @@
+import type { ReviewStatus } from "../systems/content/review.ts";
 import type { QuestStatus } from "../systems/quest/questEngine.ts";
 
 /**
@@ -5,7 +6,11 @@ import type { QuestStatus } from "../systems/quest/questEngine.ts";
  * yang diisi dari Game Clock. Belum ada konten keagamaan pada fase ini.
  */
 
-export type DialogueEffect = { type: "startQuest"; questId: string } | { type: "completeQuest"; questId: string };
+export type DialogueEffect =
+  | { type: "startQuest"; questId: string }
+  | { type: "completeQuest"; questId: string }
+  /** Memberikan hasil panen apa pun dari tas untuk dibagikan. */
+  | { type: "donateCrops"; quantity: number };
 
 export interface DialogueChoice {
   label: string;
@@ -21,10 +26,17 @@ export interface DialogueNode {
   choices?: readonly DialogueChoice[];
 }
 
+export interface DialogueCondition {
+  questId: string;
+  status: readonly QuestStatus[];
+}
+
 export interface DialogueEntry {
   node: string;
-  /** Entri pertama yang cocok dipakai. Tanpa `when` selalu cocok. */
-  when?: { questId: string; status: readonly QuestStatus[] };
+  /** Entri pertama yang cocok dipakai. Beberapa syarat harus terpenuhi semuanya. Tanpa `when` selalu cocok. */
+  when?: DialogueCondition | readonly DialogueCondition[];
+  /** Entri bermateri agama berstatus draft sampai ditinjau dan dilewati di produksi. */
+  reviewStatus?: ReviewStatus;
 }
 
 export interface NpcDialogue {
@@ -76,6 +88,17 @@ export const DIALOGUES: Record<string, NpcDialogue> = {
       },
     },
   },
+  // Hanya cadangan non-agama. Dialog materi dan quest Ustadz Harun ada di data/unreviewed.
+  "ustadz-harun": {
+    npcId: "ustadz-harun",
+    entries: [{ node: "unavailable" }],
+    nodes: {
+      unavailable: {
+        text: "Selamat {timeOfDay}. Aku sedang menyiapkan bahan cerita untuk warga. Datanglah lagi nanti ya.",
+        next: null,
+      },
+    },
+  },
   nara: {
     npcId: "nara",
     entries: [{ node: "hello" }],
@@ -91,6 +114,15 @@ export const DIALOGUES: Record<string, NpcDialogue> = {
     },
   },
 };
+
+/** Menyisipkan entri dan node tambahan (di depan entri cadangan). Dipakai konten yang belum ditinjau. */
+export function registerDialogueContent(npcId: string, entries: readonly DialogueEntry[], nodes: Record<string, DialogueNode>): void {
+  const base = DIALOGUES[npcId];
+  if (!base) return;
+  const known = new Set(base.entries.map((e) => e.node));
+  const fresh = entries.filter((e) => !known.has(e.node));
+  DIALOGUES[npcId] = { ...base, entries: [...fresh, ...base.entries], nodes: { ...base.nodes, ...nodes } };
+}
 
 export function getDialogue(npcId: string): NpcDialogue | undefined {
   return DIALOGUES[npcId];

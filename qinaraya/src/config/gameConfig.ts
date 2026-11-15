@@ -72,6 +72,8 @@ export const gameConfig = {
     plotRange: 0.9,
     /** Jarak maksimum (meter) dari pusat NPC. */
     npcRange: 2.2,
+    /** Jarak maksimum (meter) dari titik berdiri lokasi (masjid, musala, tempat wudu). */
+    poiRange: 2.0,
   },
   save: {
     key: "qinaraya.save",
