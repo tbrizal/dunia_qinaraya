@@ -11,11 +11,20 @@ export interface ActiveLearning {
   page: number;
 }
 
+export interface ActiveActivity {
+  activityId: string;
+  /** 0..steps.length; indeks terakhir adalah halaman penutup. */
+  step: number;
+  /** Nama waktu salat yang sedang berlangsung saat aktivitas dibuka (untuk teks {prayer}). */
+  prayerLabel: string;
+}
+
 interface UiStore {
   inventoryOpen: boolean;
   timePanelOpen: boolean;
   dialogue: ActiveDialogue | null;
   learning: ActiveLearning | null;
+  activity: ActiveActivity | null;
   toast: { id: number; text: string } | null;
   prayerNotice: { id: number; text: string } | null;
   setInventoryOpen: (open: boolean) => void;
@@ -23,6 +32,7 @@ interface UiStore {
   setTimePanelOpen: (open: boolean) => void;
   setDialogue: (dialogue: ActiveDialogue | null) => void;
   setLearning: (learning: ActiveLearning | null) => void;
+  setActivity: (activity: ActiveActivity | null) => void;
   showToast: (text: string) => void;
   showPrayerNotice: (text: string) => void;
 }
@@ -34,6 +44,7 @@ export const useUiStore = create<UiStore>((set) => ({
   timePanelOpen: false,
   dialogue: null,
   learning: null,
+  activity: null,
   toast: null,
   prayerNotice: null,
   setInventoryOpen: (open) => set({ inventoryOpen: open }),
@@ -41,6 +52,7 @@ export const useUiStore = create<UiStore>((set) => ({
   setTimePanelOpen: (open) => set({ timePanelOpen: open }),
   setDialogue: (dialogue) => set({ dialogue }),
   setLearning: (learning) => set({ learning }),
+  setActivity: (activity) => set({ activity }),
   showToast: (text) => set({ toast: { id: ++toastCounter, text } }),
   showPrayerNotice: (text) => set({ prayerNotice: { id: ++toastCounter, text } }),
 }));
@@ -49,6 +61,6 @@ export const useUiStore = create<UiStore>((set) => ({
 export function isModalOpen(): boolean {
   const ui = useUiStore.getState();
   return (
-    useSettingsStore.getState().settingsOpen || ui.inventoryOpen || ui.timePanelOpen || ui.dialogue !== null || ui.learning !== null
+    useSettingsStore.getState().settingsOpen || ui.inventoryOpen || ui.timePanelOpen || ui.dialogue !== null || ui.learning !== null || ui.activity !== null
   );
 }

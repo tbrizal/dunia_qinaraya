@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { advanceDialogue, chooseDialogueOption, closeDialogue } from "../stores/dialogueActions";
+import { activityNext, closeActivity } from "../stores/activityActions";
 import { closeLearning, learningNext } from "../stores/learningActions";
 import { triggerAction } from "../stores/gameActions";
 import { useSettingsStore } from "../stores/useSettingsStore";
@@ -35,6 +36,7 @@ function isNativeActivation(target: EventTarget | null): boolean {
 function handleEscape(): void {
   const ui = useUiStore.getState();
   if (ui.dialogue) closeDialogue();
+  else if (ui.activity) closeActivity();
   else if (ui.learning) closeLearning();
   else if (ui.timePanelOpen) ui.setTimePanelOpen(false);
   else if (ui.inventoryOpen) ui.setInventoryOpen(false);
@@ -58,7 +60,7 @@ export function useKeyboardInput(): void {
       const ui = useUiStore.getState();
       const settingsOpen = useSettingsStore.getState().settingsOpen;
 
-      const otherPanel = settingsOpen || ui.dialogue !== null || ui.learning !== null;
+      const otherPanel = settingsOpen || ui.dialogue !== null || ui.learning !== null || ui.activity !== null;
 
       if (e.code === "KeyI" && !e.repeat && !otherPanel && !ui.timePanelOpen) {
         ui.toggleInventory();
@@ -73,6 +75,14 @@ export function useKeyboardInput(): void {
 
       const activates = e.code === "KeyE" || ((e.code === "Enter" || e.code === "Space") && !isNativeActivation(e.target));
       const digit = DIGITS[e.code];
+
+      if (ui.activity) {
+        if (!e.repeat && activates) {
+          e.preventDefault();
+          activityNext();
+        }
+        return;
+      }
 
       if (ui.learning) {
         if (!e.repeat && activates) {

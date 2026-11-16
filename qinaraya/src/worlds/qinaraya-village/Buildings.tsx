@@ -133,38 +133,6 @@ function Stall({ spec }: { spec: BuildingSpec }) {
   );
 }
 
-/** Musala placeholder: bangunan kecil dengan kubah mungil. */
-function Musala({ spec }: { spec: BuildingSpec }) {
-  const hd = spec.depth / 2;
-  const wallH = 3;
-  return (
-    <group position={[spec.x, 0, spec.z]} rotation={[0, faceRotation(spec), 0]}>
-      <mesh position={[0, 0.2, 0]}>
-        <boxGeometry args={[spec.width + 0.3, 0.4, spec.depth + 0.3]} />
-        <meshStandardMaterial color="#c9b58a" flatShading />
-      </mesh>
-      <mesh position={[0, wallH / 2, 0]}>
-        <boxGeometry args={[spec.width, wallH, spec.depth]} />
-        <meshStandardMaterial color={spec.wall} flatShading />
-      </mesh>
-      <mesh position={[0, wallH, 0]}>
-        <sphereGeometry args={[1.6, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial color={spec.roof} flatShading />
-      </mesh>
-      <mesh position={[0, 1.2, hd + 0.03]}>
-        <boxGeometry args={[1.3, 2.2, 0.08]} />
-        <meshStandardMaterial color="#2f4a3a" flatShading />
-      </mesh>
-      {[-1, 1].map((side) => (
-        <mesh key={side} position={[side * 1.7, 1.9, hd + 0.03]}>
-          <boxGeometry args={[0.7, 1.1, 0.08]} />
-          <meshStandardMaterial color={GLOW} emissive={GLOW} emissiveIntensity={0.25} flatShading />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
 /** Tempat wudu: bak batu rendah dengan tiga keran dan peneduh kayu. */
 function WuduStation({ spec }: { spec: BuildingSpec }) {
   const hw = spec.width / 2;
@@ -233,7 +201,6 @@ export function Buildings() {
           {spec.kind === "house" && <House spec={spec} />}
           {spec.kind === "mosque" && <Mosque spec={spec} />}
           {spec.kind === "stall" && <Stall spec={spec} />}
-          {spec.kind === "musala" && <Musala spec={spec} />}
           {spec.kind === "wudu" && <WuduStation spec={spec} />}
         </Fragment>
       ))}

@@ -5,7 +5,7 @@ import { openLearning } from "../../stores/learningActions";
 import { useClockStore } from "../../stores/useClockStore";
 import { useUiStore } from "../../stores/useUiStore";
 import { formatHijriDate, getHijriDate } from "../../systems/calendar/hijriCalendar";
-import { PRAYER_LABELS, getCurrentPrayer, getNextPrayer } from "../../systems/prayer/prayerSchedule";
+import { PRAYER_LABELS, getActivePrayer, getNextPrayer } from "../../systems/prayer/prayerSchedule";
 import { MINUTES_PER_DAY } from "../../systems/time/gameClock";
 import { formatClock } from "../../systems/time/timeOfDay";
 
@@ -32,7 +32,7 @@ export function TimePanel() {
 
   const date = getHijriDate(totalMinutes, hijriCalendarConfig);
   const next = getNextPrayer(state.hour, state.minute, prayerScheduleConfig);
-  const current = getCurrentPrayer(state.hour, state.minute, prayerScheduleConfig);
+  const current = getActivePrayer(state.hour, state.minute, prayerScheduleConfig)?.prayer ?? null;
   const dayNumber = Math.floor(totalMinutes / MINUTES_PER_DAY) + 1;
   const canLearn = getVisibleLearningContent("prayer-times") !== undefined;
 

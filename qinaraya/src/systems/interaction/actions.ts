@@ -1,11 +1,15 @@
 import { CROP_LIST, getCropDef } from "../../data/crops.ts";
 import { getItemDef } from "../../data/items.ts";
+import { prayerScheduleConfig } from "../../config/lifestyleConfig.ts";
+import { getVisibleActivity } from "../../data/activities.ts";
 import { getVisibleLearningContent } from "../../data/learning.ts";
 import { getNpcDef } from "../../data/npcs.ts";
 import { getPlaceDef } from "../../data/places.ts";
 import { isWet, getGrowthProgress } from "../farming/farmPlot.ts";
 import type { FarmPlot } from "../farming/farmPlot.ts";
 import { canAdd, hasItem } from "../inventory/inventory.ts";
+import { PRAYER_LABELS, getActivePrayer, getNextPrayer } from "../prayer/prayerSchedule.ts";
+import type { PrayerScheduleEntry } from "../prayer/prayerSchedule.ts";
 import type { InventoryState } from "../inventory/inventory.ts";
 
 /** Menentukan aksi yang tersedia untuk sebuah target. Murni: tanpa efek samping. */
@@ -93,11 +97,25 @@ export function describeNpc(npcId: string): TargetView | null {
   };
 }
 
+export interface ClockTime {
+  hour: number;
+  minute: number;
+}
+
+const pad = (n: number) => String(n).padStart(2, "0");
+
 /**
- * Lokasi (masjid, musala, tempat wudu). Materi yang belum boleh tampil di build ini tidak
- * muncul sebagai aksi. Mengembalikan null bila lokasi tidak punya aksi sama sekali.
+ * Lokasi (masjid dan tempat wudu). Materi dan aktivitas yang belum boleh tampil di build ini tidak
+ * muncul sebagai aksi. Aktivitas bertipe "prayer-window" tampil redup di luar waktu salat dan
+ * menjelaskan kapan tersedia. Mengembalikan null bila lokasi tidak punya aksi sama sekali.
  */
-export function describePoi(placeId: string, learned: readonly string[], allowUnreviewed?: boolean): TargetView | null {
+export function describePoi(
+  placeId: string,
+  learned: readonly string[],
+  clock: ClockTime = { hour: 12, minute: 0 },
+  allowUnreviewed?: boolean,
+  schedule: readonly PrayerScheduleEntry[] = prayerScheduleConfig,
+): TargetView | null {
   const place = getPlaceDef(placeId);
   if (!place) return null;
 
@@ -112,6 +130,21 @@ export function describePoi(placeId: string, learned: readonly string[], allowUn
     if (isDone) done++;
     actions.push({ id: `learn:${contentId}`, label: isDone ? `${content.shortTitle} (sudah)` : content.shortTitle, enabled: true });
   }
+
+  const active = getActivePrayer(clock.hour, clock.minute, schedule);
+  for (const activityId of place.activityIds) {
+    const activity = getVisibleActivity(activityId, allowUnreviewed);
+    if (!activity) continue;
+    const prayerLabel = active ? PRAYER_LABELS[active.prayer] : "";
+    if (activity.availability === "prayer-window" && !active) {
+      const next = getNextPrayer(clock.hour, clock.minute, schedule);
+      const hint = next ? `Belum waktu salat. Berikutnya ${PRAYER_LABELS[next.prayer]} ${pad(next.hour)}.${pad(next.minute)}` : "Belum waktu salat";
+      actions.push({ id: `activity:${activity.id}`, label: activity.actionLabel.replace("{prayer}", "").trim(), enabled: false, hint });
+    } else {
+      actions.push({ id: `activity:${activity.id}`, label: activity.actionLabel.replace("{prayer}", prayerLabel).trim(), enabled: true });
+    }
+  }
+
   if (place.activities.includes("clean")) actions.push({ id: "clean", label: "Bersihkan halaman", enabled: true });
   if (actions.length === 0) return null;
 

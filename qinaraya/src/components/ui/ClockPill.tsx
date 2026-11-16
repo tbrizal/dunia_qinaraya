@@ -3,7 +3,7 @@ import { hijriCalendarConfig, prayerScheduleConfig } from "../../config/lifestyl
 import { useClockStore } from "../../stores/useClockStore";
 import { useUiStore } from "../../stores/useUiStore";
 import { formatHijriDate, getHijriDate } from "../../systems/calendar/hijriCalendar";
-import { PRAYER_LABELS, getNextPrayer } from "../../systems/prayer/prayerSchedule";
+import { PRAYER_LABELS, getActivePrayer, getNextPrayer } from "../../systems/prayer/prayerSchedule";
 import { MINUTES_PER_DAY } from "../../systems/time/gameClock";
 import { formatClock } from "../../systems/time/timeOfDay";
 
@@ -15,6 +15,7 @@ export function ClockPill() {
 
   const dayNumber = Math.floor(totalMinutes / MINUTES_PER_DAY) + 1;
   const date = useMemo(() => getHijriDate(totalMinutes, hijriCalendarConfig), [totalMinutes]);
+  const active = getActivePrayer(state.hour, state.minute, prayerScheduleConfig);
   const next = getNextPrayer(state.hour, state.minute, prayerScheduleConfig);
 
   return (
@@ -31,10 +32,16 @@ export function ClockPill() {
         {state.speedMultiplier > 1 && <span className="text-xs opacity-80">{state.speedMultiplier}x</span>}
       </span>
       <span className="opacity-90">{formatHijriDate(date, false)}</span>
-      {next && (
-        <span className="text-xs opacity-80">
-          {PRAYER_LABELS[next.prayer]} {formatClock(next.hour, next.minute)}
+      {active ? (
+        <span className="text-xs font-semibold" style={{ color: "#8fbeb4" }}>
+          Waktu {PRAYER_LABELS[active.prayer]} sekarang
         </span>
+      ) : (
+        next && (
+          <span className="text-xs opacity-80">
+            {PRAYER_LABELS[next.prayer]} {formatClock(next.hour, next.minute)}
+          </span>
+        )
       )}
     </button>
   );

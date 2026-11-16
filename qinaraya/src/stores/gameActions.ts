@@ -12,6 +12,7 @@ import { applyEvent, completeQuest, startQuest } from "../systems/quest/questEng
 import type { QuestEvent } from "../systems/quest/questEngine";
 import { gameClock } from "../systems/time/gameClockInstance";
 import { startDialogue } from "./dialogueActions";
+import { openActivity } from "./activityActions";
 import { openLearning } from "./learningActions";
 import { useLearningStore } from "./useLearningStore";
 import { useFarmStore } from "./useFarmStore";
@@ -30,7 +31,7 @@ const toast = (text: string) => useUiStore.getState().showToast(text);
 export function computeTargetView(target: TargetRef | null): TargetView | null {
   if (!target) return null;
   if (target.kind === "npc") return describeNpc(target.id);
-  if (target.kind === "poi") return describePoi(target.id, useLearningStore.getState().learned);
+  if (target.kind === "poi") return describePoi(target.id, useLearningStore.getState().learned, gameClock.getState());
   const plot = useFarmStore.getState().plots[target.id];
   return plot ? describePlot(plot, useInventoryStore.getState().inventory) : null;
 }
@@ -113,8 +114,13 @@ export function runAction(actionId: string): void {
 
   if (target.kind === "poi") {
     const option = computeTargetView(target)?.actions.find((a) => a.id === actionId);
-    if (!option?.enabled) return;
-    if (actionId.startsWith("learn:")) openLearning(actionId.slice("learn:".length));
+    if (!option) return;
+    if (!option.enabled) {
+      toast(option.hint ?? "Belum bisa dilakukan sekarang");
+      return;
+    }
+    if (actionId.startsWith("activity:")) openActivity(actionId.slice("activity:".length));
+    else if (actionId.startsWith("learn:")) openLearning(actionId.slice("learn:".length));
     else if (actionId === "clean") {
       toast("Halaman masjid makin bersih. Terima kasih sudah membantu!");
       recordQuestEvent({ type: "clean" });

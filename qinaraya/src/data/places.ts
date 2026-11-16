@@ -8,6 +8,8 @@ export interface PlaceDef {
   z: number;
   /** Materi yang bisa dipelajari di lokasi ini. */
   contentIds: readonly string[];
+  /** Aktivitas terpandu (wudu, salat) yang tersedia di lokasi ini. */
+  activityIds: readonly string[];
   /** Aktivitas non-materi yang tersedia di lokasi ini. */
   activities: readonly "clean"[];
 }
@@ -20,16 +22,8 @@ export const PLACES: readonly PlaceDef[] = [
     x: 0,
     z: -10.5,
     contentIds: ["masjid-intro", "masjid-adab"],
+    activityIds: ["salat-moment"],
     activities: ["clean"],
-  },
-  {
-    id: "musala",
-    name: "Musala Qinaraya",
-    blurb: "Tempat salat yang kecil dan tenang",
-    x: 16,
-    z: -6.8,
-    contentIds: ["musala-intro"],
-    activities: [],
   },
   {
     id: "wudu",
@@ -38,6 +32,7 @@ export const PLACES: readonly PlaceDef[] = [
     x: -7.5,
     z: -9.6,
     contentIds: ["wudu-intro"],
+    activityIds: ["wudu-practice"],
     activities: [],
   },
 ];

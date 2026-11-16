@@ -43,22 +43,22 @@ export const USTADZ_DRAFT_NODES: Record<string, DialogueNode> = {
         next: "offer_a",
       },
       offer_a: {
-        text: "Maukah kamu berkenalan dengan masjid dan musala? Kamu bisa berjalan-jalan dan membaca cerita singkat di sana. Tidak ada batas waktu.",
+        text: "Maukah kamu berkenalan dengan masjid? Kamu bisa membaca cerita singkat di depan masjid. Tidak ada batas waktu.",
         choices: [
           { label: "Mau, Ustadz", next: "started_a", effect: { type: "startQuest", questId: "learn_masjid" } },
           { label: "Nanti saja", next: null },
         ],
       },
       started_a: {
-        text: "Terima kasih. Mulailah dari depan masjid ini, lalu kunjungi musala di timur laut desa. Pelan-pelan saja.",
+        text: "Terima kasih. Mulailah dari depan masjid ini. Pelan-pelan saja.",
         next: null,
       },
       reminder_a: {
-        text: "Silakan lanjutkan jalan-jalanmu. Cerita tentang masjid ada di depan masjid, dan cerita tentang musala ada di musala. Tidak perlu terburu-buru.",
+        text: "Cerita tentang masjid ada di depan masjid. Tidak perlu terburu-buru.",
         next: null,
       },
       turnin_a: {
-        text: "Kamu sudah berkenalan dengan masjid dan musala. Semoga kamu merasa nyaman berada di sana. Ini lentera sebagai kenang-kenangan.",
+        text: "Kamu sudah berkenalan dengan masjid. Semoga kamu merasa nyaman berada di sana. Ini lentera sebagai kenang-kenangan.",
         choices: [{ label: "Terima hadiah", next: "done_a", effect: { type: "completeQuest", questId: "learn_masjid" } }],
       },
       done_a: {
@@ -66,18 +66,18 @@ export const USTADZ_DRAFT_NODES: Record<string, DialogueNode> = {
         next: null,
       },
       offer_b: {
-        text: "Selamat {timeOfDay}. Bagaimana kalau sekarang kita belajar tentang kebersihan dan mengenal wudu? Kamu juga bisa membantu membersihkan halaman masjid.",
+        text: "Selamat {timeOfDay}. Bagaimana kalau sekarang kita belajar tentang kebersihan, mengenal wudu, dan berlatih berwudu? Kamu juga bisa membantu membersihkan halaman masjid.",
         choices: [
           { label: "Mau, Ustadz", next: "started_b", effect: { type: "startQuest", questId: "learn_wudu" } },
           { label: "Nanti saja", next: null },
         ],
       },
       started_b: {
-        text: "Cerita tentang wudu ada di tempat wudu, di sebelah kiri masjid. Halaman masjid bisa dibersihkan dari depan masjid. Cerita tentang waktu salat ada di panel jam di kiri atas layarmu.",
+        text: "Cerita dan latihan wudu ada di tempat wudu, di sebelah kiri masjid. Halaman masjid bisa dibersihkan dari depan masjid. Cerita tentang waktu salat ada di panel jam di kiri atas layarmu.",
         next: null,
       },
       reminder_b: {
-        text: "Tempat wudu ada di sebelah kiri masjid. Halaman bisa dibersihkan dari depan masjid. Panel jam di kiri atas layar berisi cerita tentang waktu salat.",
+        text: "Cerita dan latihan wudu ada di tempat wudu, di sebelah kiri masjid. Halaman bisa dibersihkan dari depan masjid. Panel jam di kiri atas layar berisi cerita tentang waktu salat.",
         next: null,
       },
       turnin_b: {

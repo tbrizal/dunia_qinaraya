@@ -5,7 +5,7 @@ import { playSoftChime } from "../systems/audio/softChime";
 import { resolveCollisions } from "../systems/movement/collision";
 import { createInventory } from "../systems/inventory/inventory";
 import { playerState, resetPlayerState } from "../systems/player/playerState";
-import { SAVE_VERSION, parseSave, serializeSave } from "../systems/save/saveSystem";
+import { SAVE_VERSION, parseSave, serializeQuests, serializeSave } from "../systems/save/saveSystem";
 import type { SaveContext, SaveData } from "../systems/save/saveSystem";
 import { clockConfig, createInitialClockState, gameClock } from "../systems/time/gameClockInstance";
 import { villageLayout } from "../worlds/qinaraya-village/villageLayout";
@@ -61,7 +61,7 @@ export function buildSaveData(): SaveData {
     clock: { state: clockState, accumulator: gameClock.getAccumulator() },
     inventory: useInventoryStore.getState().inventory,
     farm: { plots: Object.values(useFarmStore.getState().plots) },
-    quests: useQuestStore.getState().quests,
+    quests: serializeQuests(useQuestStore.getState().quests),
     learning: { learned: useLearningStore.getState().learned },
     settings: {
       cameraSensitivity: settings.cameraSensitivity,

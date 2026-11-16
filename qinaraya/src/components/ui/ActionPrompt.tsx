@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { computeTargetView, runAction } from "../../stores/gameActions";
 import { useFarmStore } from "../../stores/useFarmStore";
 import { useInteractionStore } from "../../stores/useInteractionStore";
+import { useClockStore } from "../../stores/useClockStore";
 import { useInventoryStore } from "../../stores/useInventoryStore";
 import { useLearningStore } from "../../stores/useLearningStore";
 import { useSettingsStore } from "../../stores/useSettingsStore";
@@ -16,12 +17,14 @@ export function ActionPrompt() {
   const plot = useFarmStore((s) => (target?.kind === "plot" ? s.plots[target.id] : undefined));
   const inventory = useInventoryStore((s) => s.inventory);
   const learned = useLearningStore((s) => s.learned);
+  // Ketersediaan aktivitas salat bergantung pada jam game, jadi hitung ulang tiap menit game.
+  const clockMinute = useClockStore((s) => s.totalMinutes);
   const showTouch = useSettingsStore((s) => s.showTouchControls);
   const settingsOpen = useSettingsStore((s) => s.settingsOpen);
-  const panelOpen = useUiStore((s) => s.inventoryOpen || s.timePanelOpen || s.dialogue !== null || s.learning !== null);
+  const panelOpen = useUiStore((s) => s.inventoryOpen || s.timePanelOpen || s.dialogue !== null || s.learning !== null || s.activity !== null);
 
   // plot dan inventory dibaca ulang di computeTargetView; di sini hanya pemicu hitung ulang.
-  const view = useMemo(() => computeTargetView(target), [target, plot, inventory, learned]);
+  const view = useMemo(() => computeTargetView(target), [target, plot, inventory, learned, clockMinute]);
 
   if (!view || settingsOpen || panelOpen) return null;
 

@@ -11,6 +11,8 @@ export interface PrayerScheduleEntry {
   prayer: PrayerName;
   hour: number;
   minute: number;
+  /** Lama (menit game) waktu salat ini berlangsung sejak jam tiba. */
+  windowMinutes: number;
   enabled: boolean;
   notificationEnabled: boolean;
 }
@@ -30,6 +32,14 @@ export interface NextPrayer {
   /** Menit game sampai waktu tersebut (1..1440). */
   minutesUntil: number;
   isTomorrow: boolean;
+}
+
+export interface ActivePrayer {
+  prayer: PrayerName;
+  hour: number;
+  minute: number;
+  /** Sisa menit game sebelum waktu ini berakhir. */
+  minutesLeft: number;
 }
 
 export interface PrayerCrossing {
@@ -54,6 +64,15 @@ export function validateSchedule(schedule: readonly PrayerScheduleEntry[]): stri
     if (seen.has(e.prayer)) errors.push(`${e.prayer}: duplikat`);
     seen.add(e.prayer);
   }
+  for (const e of schedule) {
+    if (!Number.isInteger(e.windowMinutes) || e.windowMinutes <= 0) errors.push(`${e.prayer}: windowMinutes harus bilangan bulat positif`);
+  }
+  const sorted = activeEntries(schedule);
+  sorted.forEach((e, i) => {
+    const next = sorted[(i + 1) % sorted.length]!;
+    const gap = (minuteOfDay(next) - minuteOfDay(e) + MINUTES_PER_DAY) % MINUTES_PER_DAY || MINUTES_PER_DAY;
+    if (e.windowMinutes > gap) errors.push(`${e.prayer}: jendela ${e.windowMinutes} menit melewati waktu salat berikutnya (${gap} menit)`);
+  });
   const times = schedule.map(minuteOfDay);
   if (times.some((t, i) => i > 0 && t <= times[i - 1]!)) errors.push("jadwal harus berurutan dari pagi ke malam tanpa waktu kembar");
   return errors;
@@ -80,6 +99,19 @@ export function getCurrentPrayer(hour: number, minute: number, schedule: readonl
   let current = entries[entries.length - 1]!;
   for (const e of entries) if (minuteOfDay(e) <= now) current = e;
   return current.prayer;
+}
+
+/**
+ * Waktu salat yang SEDANG berlangsung (dalam jendelanya), atau null bila sekarang di luar semua jendela.
+ * Dipakai untuk menentukan kapan aktivitas salat tersedia.
+ */
+export function getActivePrayer(hour: number, minute: number, schedule: readonly PrayerScheduleEntry[]): ActivePrayer | null {
+  const now = hour * 60 + minute;
+  for (const e of activeEntries(schedule)) {
+    const elapsed = (((now - minuteOfDay(e)) % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+    if (elapsed < e.windowMinutes) return { prayer: e.prayer, hour: e.hour, minute: e.minute, minutesLeft: e.windowMinutes - elapsed };
+  }
+  return null;
 }
 
 /** Semua waktu salat yang tiba pada (fromTotal, toTotal]. Aman untuk lompatan banyak hari. */

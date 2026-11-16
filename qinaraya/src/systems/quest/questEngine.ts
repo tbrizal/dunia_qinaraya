@@ -18,7 +18,8 @@ export type QuestEvent =
   | { type: "harvest"; itemId: string; quantity: number }
   | { type: "learn"; contentId: string }
   | { type: "clean" }
-  | { type: "give"; quantity: number };
+  | { type: "give"; quantity: number }
+  | { type: "practice"; activityId: string };
 
 export const QUEST_STATUSES: readonly QuestStatus[] = ["inactive", "active", "ready", "completed"];
 
@@ -41,6 +42,7 @@ function eventAmount(event: QuestEvent, type: string, targetId?: string): number
   if (event.type === "harvest") return targetId && targetId !== event.itemId ? 0 : event.quantity;
   if (event.type === "learn") return targetId && targetId !== event.contentId ? 0 : 1;
   if (event.type === "give") return event.quantity;
+  if (event.type === "practice") return targetId && targetId !== event.activityId ? 0 : 1;
   return 1;
 }
 

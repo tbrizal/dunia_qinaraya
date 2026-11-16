@@ -48,22 +48,6 @@ export const DRAFT_LEARNING_CONTENT: readonly LearningContent[] = [
     ],
   },
   {
-    id: "musala-intro",
-    title: "Mengenal Musala",
-    shortTitle: "Mengenal musala",
-    category: "masjid",
-    description: "Pengenalan musala sebagai tempat salat yang lebih kecil.",
-    npcId: "ustadz-harun",
-    questId: "learn_masjid",
-    ageLevel: "early",
-    reviewStatus: "draft",
-    reviewNotes: "Sengaja tidak membahas perbedaan hukum masjid dan musala. Periksa apakah gambaran umum sudah tepat.",
-    pages: [
-      "Musala adalah tempat salat yang biasanya lebih kecil daripada masjid. Warga bisa memakainya untuk salat bersama atau belajar bersama.",
-      "Ukuran dan kegunaan musala bisa berbeda-beda. Seperti masjid, musala dijaga agar bersih, tenang, dan nyaman.",
-    ],
-  },
-  {
     id: "wudu-intro",
     title: "Mengenal Wudu",
     shortTitle: "Mengenal wudu",

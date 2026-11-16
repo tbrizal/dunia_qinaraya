@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect } from "react";
 import { GameCanvas } from "../components/game/GameCanvas";
 import { ActionPrompt } from "../components/ui/ActionPrompt";
+import { ActivityPanel } from "../components/ui/ActivityPanel";
 import { CameraDragSurface } from "../components/ui/CameraDragSurface";
 import { DialoguePanel } from "../components/ui/DialoguePanel";
 import { ErrorBoundary } from "../components/ui/ErrorBoundary";
@@ -57,6 +58,7 @@ export function App() {
         <DialoguePanel />
         <TimePanel />
         <LearningPanel />
+        <ActivityPanel />
         <PrayerNotice />
         <Toast />
         {DevPanel && (

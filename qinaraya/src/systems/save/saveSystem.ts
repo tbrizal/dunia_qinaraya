@@ -6,7 +6,7 @@ import { PLOT_STATUSES, createPlot } from "../farming/farmPlot.ts";
 import type { FarmPlot, PlotStatus } from "../farming/farmPlot.ts";
 import type { InventoryState, ItemStack } from "../inventory/inventory.ts";
 import { QUEST_STATUSES } from "../quest/questEngine.ts";
-import type { QuestState, QuestStatus } from "../quest/questEngine.ts";
+import type { QuestProgress, QuestState, QuestStatus } from "../quest/questEngine.ts";
 import { fromTotalMinutes, toTotalMinutes } from "../time/gameClock.ts";
 import type { ClockConfig, GameClockState } from "../time/gameClock.ts";
 
@@ -25,10 +25,23 @@ export interface SaveData {
   clock: { state: Omit<GameClockState, "isPaused">; accumulator: number };
   inventory: InventoryState;
   farm: { plots: FarmPlot[] };
-  quests: QuestState;
+  quests: SavedQuests;
   /** Id materi edukasi yang sudah selesai dibaca. Hanya catatan belajar, bukan skor. */
   learning: { learned: string[] };
   settings: { cameraSensitivity: number; showFps: boolean; prayerNotifications: boolean; prayerSound: boolean };
+}
+
+/** Progres quest yang disimpan. `objectiveIds` mencatat urutan objektif saat disimpan. */
+export type SavedQuests = Record<string, QuestProgress & { objectiveIds?: string[] }>;
+
+/** Menambahkan id objektif ke setiap quest sebelum disimpan, supaya progres tahan terhadap perubahan urutan. */
+export function serializeQuests(state: QuestState): SavedQuests {
+  const result: SavedQuests = {};
+  for (const [id, progress] of Object.entries(state)) {
+    const def = getQuestDef(id);
+    result[id] = def ? { ...progress, objectiveIds: def.objectives.map((o) => o.id) } : progress;
+  }
+  return result;
 }
 
 export interface SaveContext {
@@ -140,8 +153,21 @@ function sanitizeQuests(raw: unknown): QuestState {
     if (!isRecord(entry) || !QUEST_STATUSES.includes(entry.status as QuestStatus)) continue;
     const def = getQuestDef(quest.id);
     if (!def || !Array.isArray(entry.objectives)) continue;
-    const objectives = def.objectives.map((o, i) => clampInt(entry.objectives instanceof Array ? entry.objectives[i] : 0, 0, o.count, 0));
-    result[quest.id] = { status: entry.status as QuestStatus, objectives };
+    const saved: unknown[] = entry.objectives;
+    const savedIds = Array.isArray(entry.objectiveIds) && entry.objectiveIds.every((x) => typeof x === "string") ? (entry.objectiveIds as string[]) : undefined;
+    // Pemetaan berdasarkan id: dari save baru (objectiveIds) atau dari tabel layout lama berdasarkan jumlah objektif.
+    const layout = savedIds ?? def.legacyObjectiveLayouts?.[saved.length];
+    const objectives = def.objectives.map((o, i) => {
+      const index = layout ? layout.indexOf(o.id) : i;
+      return clampInt(index >= 0 ? saved[index] : 0, 0, o.count, 0);
+    });
+    // Definisi quest bisa berubah antar versi (objektif ditambah atau dikurangi): sesuaikan statusnya
+    // agar quest tidak macet di "active" padahal semua selesai, atau "ready" padahal ada yang belum.
+    const allDone = def.objectives.every((o, i) => (objectives[i] ?? 0) >= o.count);
+    let status = entry.status as QuestStatus;
+    if (status === "active" && allDone) status = "ready";
+    else if (status === "ready" && !allDone) status = "active";
+    result[quest.id] = { status, objectives };
   }
   return result;
 }

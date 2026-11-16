@@ -16,13 +16,17 @@ export const hijriCalendarConfig: HijriCalendarConfig = {
   startingDate: { day: 1, month: 1, year: 1 },
 };
 
-/** Jadwal awal sebagai keputusan desain game. Urutkan dari pagi ke malam. */
+/**
+ * Jadwal awal sebagai keputusan desain game. Urutkan dari pagi ke malam.
+ * `windowMinutes` adalah lama "waktu salat sedang berlangsung" sejak jam tiba; aktivitas salat
+ * hanya tersedia di dalamnya. Jendela tidak boleh melewati waktu salat berikutnya.
+ */
 export const prayerScheduleConfig: readonly PrayerScheduleEntry[] = [
-  { prayer: "subuh", hour: 5, minute: 0, enabled: true, notificationEnabled: true },
-  { prayer: "dzuhur", hour: 12, minute: 0, enabled: true, notificationEnabled: true },
-  { prayer: "ashar", hour: 15, minute: 30, enabled: true, notificationEnabled: true },
-  { prayer: "maghrib", hour: 18, minute: 15, enabled: true, notificationEnabled: true },
-  { prayer: "isya", hour: 19, minute: 30, enabled: true, notificationEnabled: true },
+  { prayer: "subuh", hour: 5, minute: 0, windowMinutes: 120, enabled: true, notificationEnabled: true },
+  { prayer: "dzuhur", hour: 12, minute: 0, windowMinutes: 180, enabled: true, notificationEnabled: true },
+  { prayer: "ashar", hour: 15, minute: 30, windowMinutes: 150, enabled: true, notificationEnabled: true },
+  { prayer: "maghrib", hour: 18, minute: 15, windowMinutes: 75, enabled: true, notificationEnabled: true },
+  { prayer: "isya", hour: 19, minute: 30, windowMinutes: 240, enabled: true, notificationEnabled: true },
 ];
 
 export const prayerNoticeConfig = {

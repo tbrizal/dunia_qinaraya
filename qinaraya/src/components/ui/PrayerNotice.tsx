@@ -1,10 +1,12 @@
 import { useEffect } from "react";
 import { prayerNoticeConfig } from "../../config/lifestyleConfig";
+import { getVisibleActivity } from "../../data/activities";
 import { useUiStore } from "../../stores/useUiStore";
 
 /** Pengingat lembut waktu salat simulasi. Tidak bisa diklik, hilang sendiri, dan tanpa konsekuensi. */
 export function PrayerNotice() {
   const notice = useUiStore((s) => s.prayerNotice);
+  const hint = notice ? getVisibleActivity("salat-moment")?.reminderHint : undefined;
 
   useEffect(() => {
     if (!notice) return;
@@ -26,6 +28,7 @@ export function PrayerNotice() {
           style={{ background: "rgba(63, 112, 106, 0.92)", color: "#f3ecd6" }}
         >
           <p className="text-base font-semibold">{notice.text}</p>
+          {hint && <p className="mt-0.5 text-sm">{hint}</p>}
           <p className="text-xs opacity-85">Jadwal simulasi. Santai saja, tidak perlu terburu-buru.</p>
         </div>
       )}

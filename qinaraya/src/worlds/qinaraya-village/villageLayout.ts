@@ -9,7 +9,7 @@ import type { Collider, WorldBounds } from "../../systems/movement/collision.ts"
  * Pusat desa di (0, 0). Utara = -Z, selatan = +Z. 1 unit = 1 meter.
  */
 
-export type BuildingKind = "house" | "mosque" | "stall" | "musala" | "wudu";
+export type BuildingKind = "house" | "mosque" | "stall" | "wudu";
 
 export interface BuildingSpec {
   id: string;
@@ -68,7 +68,6 @@ const buildings: BuildingSpec[] = [
   { id: "house-c", kind: "house", x: -9, z: -6, width: 5, depth: 4, facing: "south", wall: "#e3d2b0", roof: "#a8603f" },
   { id: "house-d", kind: "house", x: 9, z: -6, width: 5, depth: 4, facing: "south", wall: "#ddd0b4", roof: "#9b5a43" },
   { id: "farm-hut", kind: "house", x: -8, z: 16, width: 4, depth: 3.5, facing: "south", wall: "#c9a779", roof: "#6f8f4e" },
-  { id: "musala", kind: "musala", x: 16, z: -10, width: 5, depth: 4, facing: "south", wall: "#efe6cf", roof: "#4f8f86" },
   { id: "wudu", kind: "wudu", x: -7.5, z: -11.5, width: 2.4, depth: 1.2, facing: "south", wall: "#a9a79b", roof: "#8a5a3a" },
   { id: "stall-a", kind: "stall", x: 15, z: 3.2, width: 3.6, depth: 2.2, facing: "north", wall: "#d9a066", roof: "#d9784a" },
   { id: "stall-b", kind: "stall", x: 15, z: -3.2, width: 3.6, depth: 2.2, facing: "south", wall: "#d9a066", roof: "#4f8f86" },
