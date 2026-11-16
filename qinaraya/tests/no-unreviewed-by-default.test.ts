@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { ACTIVITIES } from "../src/data/activities.ts";
 import { DIALOGUES } from "../src/data/dialogues.ts";
 import { LEARNING_CONTENT } from "../src/data/learning.ts";
 import { QUESTS, QUEST_LIST } from "../src/data/quests.ts";
@@ -14,6 +15,10 @@ import type { SaveContext } from "../src/systems/save/saveSystem.ts";
 
 test("data dasar tidak memuat materi edukasi", () => {
   assert.equal(LEARNING_CONTENT.length, 0);
+});
+
+test("data dasar tidak memuat aktivitas wudu atau salat", () => {
+  assert.equal(ACTIVITIES.length, 0);
 });
 
 test("data dasar hanya memuat quest non-agama", () => {
@@ -47,7 +52,7 @@ test("save dari build dev yang memuat id materi draf tetap terbaca aman di produ
     clock: { state: { day: 1, month: 1, year: 1, hour: 6, minute: 30, speedMultiplier: 1 }, accumulator: 0 },
     inventory: { slots: 20, stacks: [{ itemId: "hoe", quantity: 1 }] },
     farm: { plots: [] },
-    quests: { learn_masjid: { status: "active", objectives: [1, 0, 0] }, tutorial_farming: { status: "completed", objectives: [1, 1, 1, 1] } },
+    quests: { learn_masjid: { status: "active", objectives: [1, 0] }, tutorial_farming: { status: "completed", objectives: [1, 1, 1, 1] } },
     learning: { learned: ["masjid-intro"] },
     settings: { cameraSensitivity: 1, showFps: false, prayerNotifications: true, prayerSound: false },
   });

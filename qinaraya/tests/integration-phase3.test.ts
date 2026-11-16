@@ -38,6 +38,8 @@ async function load(server: ViteDevServer) {
     settings: await l("/src/stores/useSettingsStore.ts"),
     clock: await l("/src/systems/time/gameClockInstance.ts"),
     learningData: await l("/src/data/learning.ts"),
+    activityActions: await l("/src/stores/activityActions.ts"),
+    activities: await l("/src/data/activities.ts"),
     tracker: await l("/src/systems/quest/questTracker.ts"),
     unreviewed: await l("/src/data/unreviewed/index.ts"),
   };
@@ -74,6 +76,20 @@ function readContent(m: Record<string, Mod>, placeId: string, contentId: string)
   assert.equal(m.ui.useUiStore.getState().learning, null);
 }
 
+/** Menjalankan latihan wudu sampai selesai, seperti pemain menekan Lanjut berkali-kali. */
+function practiceWudu(m: Record<string, Mod>) {
+  target(m, "poi", "wudu");
+  m.actions.runAction("activity:wudu-practice");
+  assert.equal(m.ui.useUiStore.getState().activity?.activityId, "wudu-practice");
+  assert.equal(m.ui.isModalOpen(), true, "aktivitas menjeda dunia");
+  for (let guard = 0; guard < 20 && m.ui.useUiStore.getState().activity; guard++) m.activityActions.activityNext();
+  assert.equal(m.ui.useUiStore.getState().activity, null);
+}
+
+function setTime(m: Record<string, Mod>, hour: number, minute: number) {
+  m.clock.gameClock.setState({ day: 1, month: 1, year: 1, hour, minute, speedMultiplier: 1, isPaused: false }, 0);
+}
+
 function talkTo(m: Record<string, Mod>) {
   target(m, "npc", "ustadz-harun");
   m.actions.runAction("talk");
@@ -99,13 +115,15 @@ test("alur lengkap tiga quest Ustadz Harun (build uji)", () => {
   d.dialogueActions.advanceDialogue();
 
   target(d, "poi", "masjid");
-  assert.deepEqual(d.actions.computeTargetView(d.inter.useInteractionStore.getState().target).actions.map((a: Mod) => a.id), ["learn:masjid-intro", "learn:masjid-adab", "clean"]);
+  assert.deepEqual(
+    d.actions.computeTargetView(d.inter.useInteractionStore.getState().target).actions.map((a: Mod) => a.id),
+    ["learn:masjid-intro", "learn:masjid-adab", "activity:salat-moment", "clean"],
+  );
   readContent(d, "masjid", "masjid-intro");
-  assert.deepEqual(d.quest.useQuestStore.getState().quests.learn_masjid.objectives, [1, 0, 0]);
+  assert.deepEqual(d.quest.useQuestStore.getState().quests.learn_masjid.objectives, [1, 0]);
   assert.ok(d.learning.useLearningStore.getState().learned.includes("masjid-intro"));
-  readContent(d, "masjid", "masjid-adab");
   assert.equal(status(d, "learn_masjid"), "active");
-  readContent(d, "musala", "musala-intro");
+  readContent(d, "masjid", "masjid-adab");
   assert.equal(status(d, "learn_masjid"), "ready");
   assert.match(toast(d), /Misi selesai/);
 
@@ -122,9 +140,12 @@ test("alur lengkap tiga quest Ustadz Harun (build uji)", () => {
   d.dialogueActions.chooseDialogueOption(0);
   d.dialogueActions.advanceDialogue();
   readContent(d, "wudu", "wudu-intro");
+  assert.equal(status(d, "learn_wudu"), "active");
+  practiceWudu(d);
+  assert.deepEqual(d.quest.useQuestStore.getState().quests.learn_wudu.objectives.slice(0, 2), [1, 1]);
   target(d, "poi", "masjid");
   for (let i = 0; i < 3; i++) d.actions.runAction("clean");
-  assert.equal(d.quest.useQuestStore.getState().quests.learn_wudu.objectives[1], 3);
+  assert.equal(d.quest.useQuestStore.getState().quests.learn_wudu.objectives[2], 3);
   d.learningActions.openLearning("prayer-times"); // dari panel jam
   d.learningActions.learningNext();
   d.learningActions.learningNext();
@@ -269,14 +290,14 @@ test("save Phase 2 (kunci lama, versi 1) dimuat, dimigrasikan, dan dipindah ke k
 
 test("progres belajar tersimpan dan kembali setelah muat ulang", () => {
   d.persistence.startNewGame();
-  d.quest.useQuestStore.getState().setQuests({ learn_masjid: { status: "active", objectives: [1, 0, 0] } });
+  d.quest.useQuestStore.getState().setQuests({ learn_masjid: { status: "active", objectives: [1, 0] } });
   d.learning.useLearningStore.getState().markLearned("masjid-intro");
   d.persistence.saveGame();
   d.learning.useLearningStore.getState().reset();
   d.quest.useQuestStore.getState().reset();
   d.persistence.bootstrapGame();
   assert.deepEqual(d.learning.useLearningStore.getState().learned, ["masjid-intro"]);
-  assert.deepEqual(d.quest.useQuestStore.getState().quests.learn_masjid.objectives, [1, 0, 0]);
+  assert.deepEqual(d.quest.useQuestStore.getState().quests.learn_masjid.objectives, [1, 0]);
 });
 
 // ---------- Skenario produksi (build menolak konten belum ditinjau) ----------
@@ -290,10 +311,11 @@ test("produksi: materi draf tidak bisa dibuka walau terdaftar", () => {
   assert.equal(toast(p), "Materi ini belum tersedia");
 });
 
-test("produksi: lokasi hanya menawarkan aktivitas non-agama, musala dan tempat wudu tanpa prompt", () => {
+test("produksi: lokasi hanya menawarkan aktivitas non-agama, tempat wudu tanpa prompt, bahkan saat waktu salat", () => {
+  setTime(p, 12, 30);
   target(p, "poi", "masjid");
   assert.deepEqual(p.actions.computeTargetView(p.inter.useInteractionStore.getState().target).actions.map((a: Mod) => a.id), ["clean"]);
-  assert.equal(p.actions.computeTargetView({ kind: "poi", id: "musala" }), null);
+  assert.equal(p.actions.computeTargetView({ kind: "poi", id: "musala" }), null, "musala sudah dihapus");
   assert.equal(p.actions.computeTargetView({ kind: "poi", id: "wudu" }), null);
 });
 
@@ -313,4 +335,128 @@ test("produksi: HUD hanya melacak quest non-agama", () => {
   assert.equal(p.tracker.getTrackedQuest({})?.quest.id, "tutorial_farming");
   const active = { learn_masjid: { status: "active", objectives: [0, 0, 0] } };
   assert.equal(p.tracker.getTrackedQuest(active)?.quest.id, "tutorial_farming");
+});
+
+test("produksi: aktivitas wudu dan salat tidak bisa dibuka dan pengingat tanpa saran aktivitas", () => {
+  setTime(p, 12, 30);
+  p.activityActions.openActivity("wudu-practice");
+  assert.equal(p.ui.useUiStore.getState().activity, null);
+  assert.equal(toast(p), "Aktivitas ini belum tersedia");
+  p.activityActions.openActivity("salat-moment");
+  assert.equal(p.ui.useUiStore.getState().activity, null);
+  assert.equal(p.activities.getVisibleActivity("salat-moment"), undefined);
+  assert.equal(p.activities.getVisibleActivity("salat-moment", true)?.reminderHint, "Kamu bisa berwudu dan salat di masjid, atau lanjut bermain.");
+});
+
+// ---------- Wudu dan salat (build uji) ----------
+
+test("wudu: bisa dilatih kapan saja, termasuk di luar waktu salat, tanpa mengubah milik pemain", () => {
+  d.persistence.startNewGame();
+  const before = JSON.stringify([d.inv.useInventoryStore.getState().inventory, d.learning.useLearningStore.getState().learned]);
+  for (const [h, m] of [[3, 0], [10, 0], [12, 30]] as const) {
+    setTime(d, h, m);
+    practiceWudu(d);
+  }
+  assert.equal(toast(d), "Latihan wudu selesai");
+  assert.equal(JSON.stringify([d.inv.useInventoryStore.getState().inventory, d.learning.useLearningStore.getState().learned]), before, "tidak ada hadiah atau catatan");
+});
+
+test("wudu bisa ditutup di tengah jalan kapan saja tanpa konsekuensi dan tanpa progres quest", () => {
+  d.persistence.startNewGame();
+  d.quest.useQuestStore.getState().setQuests({ learn_wudu: { status: "active", objectives: [1, 0, 0, 0] } });
+  target(d, "poi", "wudu");
+  d.actions.runAction("activity:wudu-practice");
+  d.activityActions.activityNext();
+  d.activityActions.activityNext();
+  assert.equal(d.ui.useUiStore.getState().activity.step, 2);
+  d.activityActions.activityPrev();
+  assert.equal(d.ui.useUiStore.getState().activity.step, 1);
+  d.activityActions.closeActivity();
+  assert.equal(d.ui.useUiStore.getState().activity, null);
+  assert.deepEqual(d.quest.useQuestStore.getState().quests.learn_wudu.objectives, [1, 0, 0, 0], "belum selesai, belum dihitung");
+});
+
+test("salat: di luar waktu salat ditolak dengan penjelasan yang sopan", () => {
+  d.persistence.startNewGame();
+  setTime(d, 10, 0);
+  target(d, "poi", "masjid");
+  d.actions.runAction("activity:salat-moment");
+  assert.equal(d.ui.useUiStore.getState().activity, null);
+  assert.equal(toast(d), "Belum waktu salat. Berikutnya Dzuhur 12.00");
+});
+
+test("salat: saat waktu Dzuhur berlangsung aktivitas terbuka, memakai nama waktunya, dan selesai tanpa mencatat apa pun", () => {
+  d.persistence.startNewGame();
+  setTime(d, 12, 30);
+  d.inv.useInventoryStore.getState().add("hoe", 1);
+  const before = JSON.stringify([
+    d.inv.useInventoryStore.getState().inventory,
+    d.quest.useQuestStore.getState().quests,
+    d.learning.useLearningStore.getState().learned,
+    d.farm.useFarmStore.getState().plots,
+  ]);
+  const minutesBefore = d.clock.gameClock.getTotalMinutes();
+
+  target(d, "poi", "masjid");
+  const view = d.actions.computeTargetView(d.inter.useInteractionStore.getState().target);
+  assert.equal(view.actions.find((a: Mod) => a.id === "activity:salat-moment").label, "Salat Dzuhur");
+
+  d.actions.runAction("activity:salat-moment");
+  const open = d.ui.useUiStore.getState().activity;
+  assert.equal(open.activityId, "salat-moment");
+  assert.equal(open.prayerLabel, "Dzuhur");
+  assert.equal(d.ui.isModalOpen(), true);
+  d.clock.gameClock.setPaused(true);
+  assert.equal(d.clock.gameClock.tick(5), 0, "waktu dunia berhenti selama aktivitas");
+  d.clock.gameClock.setPaused(false);
+
+  for (let guard = 0; guard < 20 && d.ui.useUiStore.getState().activity; guard++) d.activityActions.activityNext();
+  assert.equal(d.ui.useUiStore.getState().activity, null);
+  assert.equal(toast(d), "Terima kasih sudah berhenti sejenak");
+
+  const after = JSON.stringify([
+    d.inv.useInventoryStore.getState().inventory,
+    d.quest.useQuestStore.getState().quests,
+    d.learning.useLearningStore.getState().learned,
+    d.farm.useFarmStore.getState().plots,
+  ]);
+  assert.equal(after, before, "tidak ada hadiah, skor, catatan, atau perubahan apa pun");
+  assert.equal(d.clock.gameClock.getTotalMinutes(), minutesBefore, "tidak memakan waktu game");
+});
+
+test("salat: dapat ditutup kapan saja, dan jendela berakhir tepat sesuai konfigurasi", () => {
+  d.persistence.startNewGame();
+  target(d, "poi", "masjid");
+
+  setTime(d, 14, 59);
+  d.actions.runAction("activity:salat-moment");
+  assert.ok(d.ui.useUiStore.getState().activity, "menit terakhir jendela Dzuhur masih bisa");
+  d.activityActions.closeActivity();
+  assert.equal(d.ui.useUiStore.getState().activity, null);
+
+  setTime(d, 15, 0);
+  d.actions.runAction("activity:salat-moment");
+  assert.equal(d.ui.useUiStore.getState().activity, null, "jendela Dzuhur sudah berakhir");
+
+  setTime(d, 15, 30);
+  d.actions.runAction("activity:salat-moment");
+  assert.equal(d.ui.useUiStore.getState().activity.prayerLabel, "Ashar");
+  d.activityActions.closeActivity();
+});
+
+test("pengingat salat di build uji menyertakan saran aktivitas; sesudah tombol tutup tidak ada yang tercatat", () => {
+  d.persistence.startNewGame();
+  assert.equal(d.activities.getVisibleActivity("salat-moment").reminderHint, "Kamu bisa berwudu dan salat di masjid, atau lanjut bermain.");
+  assert.equal(d.activities.getVisibleActivity("wudu-practice").availability, "anytime");
+});
+
+test("save lama dengan quest bersuci siap-diserahkan (sebelum ada latihan wudu) kembali aktif dan bisa diselesaikan", () => {
+  d.persistence.startNewGame();
+  const old = JSON.parse(JSON.stringify(d.persistence.buildSaveData()));
+  old.quests = { learn_wudu: { status: "ready", objectives: [1, 3, 1] } };
+  memory.set("qinaraya.save", JSON.stringify(old));
+  d.persistence.bootstrapGame();
+  assert.equal(status(d, "learn_wudu"), "active");
+  practiceWudu(d);
+  assert.equal(status(d, "learn_wudu"), "ready");
 });

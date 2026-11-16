@@ -10,7 +10,7 @@ import { build } from "vite";
  * ditinjau benar-benar tidak terkirim ke pemain pada build produksi, bukan sekadar disembunyikan di UI.
  */
 
-const DRAFT_SENTINELS = ["Wudu adalah cara bersuci", "Berkenalan dengan Masjid", "Umat Islam melaksanakan salat lima waktu", "Berbagi Hasil Kebun"];
+const DRAFT_SENTINELS = ["Wudu adalah cara bersuci", "Berkenalan dengan Masjid", "Umat Islam melaksanakan salat lima waktu", "Berbagi Hasil Kebun", "Latihan Berwudu", "Salat dilakukan di dunia nyata", "Kamu bisa berwudu dan salat di masjid"];
 const DEV_SENTINEL = "Panel debug (hanya development)";
 
 async function buildAndRead(env: Record<string, string | undefined>): Promise<string> {

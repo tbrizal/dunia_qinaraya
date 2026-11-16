@@ -51,19 +51,6 @@ Konten ditulis tanpa kutipan ayat atau hadis. Kolom persetujuan diisi oleh penin
 - [ ] Disetujui  [ ] Perlu revisi  | Peninjau: ____________  Tanggal: ____________
 - Catatan peninjau: 
 
-### Mengenal Musala (`musala-intro`)
-
-- Status saat ini: **Draf** (`draft`)
-- Kategori: masjid, tingkat usia: early
-- Berkas: `src/data/unreviewed/learning.ts`
-- Catatan untuk peninjau: Sengaja tidak membahas perbedaan hukum masjid dan musala. Periksa apakah gambaran umum sudah tepat.
-
-1. Musala adalah tempat salat yang biasanya lebih kecil daripada masjid. Warga bisa memakainya untuk salat bersama atau belajar bersama.
-2. Ukuran dan kegunaan musala bisa berbeda-beda. Seperti masjid, musala dijaga agar bersih, tenang, dan nyaman.
-
-- [ ] Disetujui  [ ] Perlu revisi  | Peninjau: ____________  Tanggal: ____________
-- Catatan peninjau: 
-
 ### Mengenal Wudu (`wudu-intro`)
 
 - Status saat ini: **Menunggu tinjauan** (`needs-review`)
@@ -94,17 +81,58 @@ Konten ditulis tanpa kutipan ayat atau hadis. Kolom persetujuan diisi oleh penin
 - [ ] Disetujui  [ ] Perlu revisi  | Peninjau: ____________  Tanggal: ____________
 - Catatan peninjau: 
 
+## Aktivitas terpandu (wudu dan salat)
+
+Berkas: `src/data/unreviewed/activities.ts`. Aktivitas ini sengaja hanya berupa teks langkah demi langkah:
+**tidak ada animasi gerakan wudu atau salat**, tidak ada skor, hadiah, atau pencatatan, dan tidak ada penalti bila tidak dilakukan.
+Peninjau juga diminta memutuskan apakah animasi gerakan boleh dibuat, dan bila ya, memberikan urutan yang disetujui.
+
+### Latihan Berwudu (`wudu-practice`)
+
+- Status saat ini: **Menunggu tinjauan** (`needs-review`)
+- Lokasi: wudu, ketersediaan: kapan saja
+- Catatan untuk peninjau: WAJIB ditinjau ahli. Periksa: anggota dan urutan yang disebut, kalimat tentang niat (sengaja tidak memuat lafaz), catatan perbedaan antar pendapat, dan seluruh teks. Tidak ada bacaan dan tidak ada animasi gerakan.
+
+1. **Bersiap**: Pastikan lenganmu bebas dan siapkan air secukupnya. Gunakan air dengan tidak berlebihan.
+2. **Niat**: Berwudu dimulai dengan berniat untuk bersuci. Cara meniatkannya bisa kamu tanyakan kepada orang tua atau gurumu.
+3. **Wajah**: Basuh wajahmu dengan air.
+4. **Kedua tangan**: Basuh kedua tanganmu sampai siku.
+5. **Kepala**: Usap kepalamu dengan tangan yang basah.
+6. **Kedua kaki**: Basuh kedua kakimu sampai mata kaki.
+
+- Penutup: Latihan selesai. Urutan dan rincian wudu bisa sedikit berbeda menurut penjelasan para ulama, jadi ikuti cara yang diajarkan orang tua atau gurumu. Ini hanya latihan mengenal, bukan pengganti belajar langsung. Kamu boleh mengulangnya kapan saja.
+
+- [ ] Disetujui  [ ] Perlu revisi  | Peninjau: ____________  Tanggal: ____________
+- Catatan peninjau: 
+
+### Waktu Salat (`salat-moment`)
+
+- Status saat ini: **Menunggu tinjauan** (`needs-review`)
+- Lokasi: masjid, ketersediaan: hanya saat waktu salat sedang berlangsung
+- Catatan untuk peninjau: WAJIB ditinjau ahli. Aktivitas ini sengaja hanya berupa jeda terpandu, bukan simulasi tata cara salat. Periksa seluruh teks, terutama langkah 'Melaksanakan', dan putuskan apakah animasi gerakan (jika diinginkan) boleh dibuat serta bagaimana urutannya.
+
+1. **Waktunya tiba**: Waktu {prayer} sedang berlangsung di Qinaraya (jadwal simulasi). Kamu bisa berhenti sejenak dari kesibukanmu.
+2. **Bersiap**: Pastikan dirimu dan tempatnya bersih. Jika belum berwudu, tempat wudu ada di sebelah kiri masjid.
+3. **Tenang**: Atur napasmu, bersikaplah tenang, dan hadapkan dirimu ke arah salat sesuai yang diajarkan orang tua atau gurumu.
+4. **Melaksanakan**: Salat dilakukan di dunia nyata sesuai tata cara yang diajarkan kepadamu. Di dalam game kita hanya berhenti sejenak bersama-sama; permainan tidak menggantikan ibadah yang sebenarnya.
+5. **Selesai**: Setelah selesai, rapikan tempatmu dan lanjutkan harimu dengan tenang.
+
+- Penutup: Terima kasih sudah berhenti sejenak. Tidak ada nilai atau hadiah untuk ini, dan tidak apa-apa jika kamu memilih bermain dulu.
+- Kalimat pada pengingat waktu salat: Kamu bisa berwudu dan salat di masjid, atau lanjut bermain.
+
+- [ ] Disetujui  [ ] Perlu revisi  | Peninjau: ____________  Tanggal: ____________
+- Catatan peninjau: 
+
 ## Quest pembelajaran
 
 ### Berkenalan dengan Masjid (`learn_masjid`)
 
 - Status: **Draf**, berkas: `src/data/unreviewed/quests.ts`
-- Ringkasan: Jelajahi masjid dan musala bersama Ustadz Harun, lalu pelajari kebiasaan baik di sana.
+- Ringkasan: Berkenalan dengan Masjid Qinaraya bersama Ustadz Harun, lalu pelajari kebiasaan baik di sana.
 - Prasyarat: tidak ada
 - Tujuan:
   - Pelajari tentang masjid (di depan masjid) (1x)
   - Pelajari adab di masjid (di depan masjid) (1x)
-  - Kunjungi musala di timur laut desa (1x)
 - Hadiah (kosmetik): lantern x1
 
 - [ ] Disetujui  [ ] Perlu revisi  | Peninjau: ____________  Tanggal: ____________
@@ -112,10 +140,11 @@ Konten ditulis tanpa kutipan ayat atau hadis. Kolom persetujuan diisi oleh penin
 ### Bersih dan Bersuci (`learn_wudu`)
 
 - Status: **Draf**, berkas: `src/data/unreviewed/quests.ts`
-- Ringkasan: Mengenal wudu, menjaga kebersihan masjid, dan mengenal waktu salat di Qinaraya.
+- Ringkasan: Mengenal dan berlatih wudu, menjaga kebersihan masjid, dan mengenal waktu salat di Qinaraya.
 - Prasyarat: learn_masjid
 - Tujuan:
   - Pelajari wudu di tempat wudu (1x)
+  - Berlatih berwudu di tempat wudu (latihan mengenal) (1x)
   - Bersihkan halaman masjid (3x)
   - Buka panel jam di kiri atas dan pelajari waktu salat (1x)
 - Hadiah (kosmetik): flower_pot x1
@@ -139,19 +168,19 @@ Berkas: `src/data/unreviewed/ustadzDialogue.ts`. Dialog cadangan (non-agama) ada
 
 - **unavailable**: Selamat {timeOfDay}. Aku sedang menyiapkan bahan cerita untuk warga. Datanglah lagi nanti ya.
 - **intro**: Selamat {timeOfDay}, Nak. Aku Ustadz Harun. Aku senang menemani warga belajar kebiasaan baik di desa ini.
-- **offer_a**: Maukah kamu berkenalan dengan masjid dan musala? Kamu bisa berjalan-jalan dan membaca cerita singkat di sana. Tidak ada batas waktu.
+- **offer_a**: Maukah kamu berkenalan dengan masjid? Kamu bisa membaca cerita singkat di depan masjid. Tidak ada batas waktu.
   - Pilihan: "Mau, Ustadz"
   - Pilihan: "Nanti saja"
-- **started_a**: Terima kasih. Mulailah dari depan masjid ini, lalu kunjungi musala di timur laut desa. Pelan-pelan saja.
-- **reminder_a**: Silakan lanjutkan jalan-jalanmu. Cerita tentang masjid ada di depan masjid, dan cerita tentang musala ada di musala. Tidak perlu terburu-buru.
-- **turnin_a**: Kamu sudah berkenalan dengan masjid dan musala. Semoga kamu merasa nyaman berada di sana. Ini lentera sebagai kenang-kenangan.
+- **started_a**: Terima kasih. Mulailah dari depan masjid ini. Pelan-pelan saja.
+- **reminder_a**: Cerita tentang masjid ada di depan masjid. Tidak perlu terburu-buru.
+- **turnin_a**: Kamu sudah berkenalan dengan masjid. Semoga kamu merasa nyaman berada di sana. Ini lentera sebagai kenang-kenangan.
   - Pilihan: "Terima hadiah"
 - **done_a**: Datanglah lagi kapan saja kalau ingin belajar hal lain.
-- **offer_b**: Selamat {timeOfDay}. Bagaimana kalau sekarang kita belajar tentang kebersihan dan mengenal wudu? Kamu juga bisa membantu membersihkan halaman masjid.
+- **offer_b**: Selamat {timeOfDay}. Bagaimana kalau sekarang kita belajar tentang kebersihan, mengenal wudu, dan berlatih berwudu? Kamu juga bisa membantu membersihkan halaman masjid.
   - Pilihan: "Mau, Ustadz"
   - Pilihan: "Nanti saja"
-- **started_b**: Cerita tentang wudu ada di tempat wudu, di sebelah kiri masjid. Halaman masjid bisa dibersihkan dari depan masjid. Cerita tentang waktu salat ada di panel jam di kiri atas layarmu.
-- **reminder_b**: Tempat wudu ada di sebelah kiri masjid. Halaman bisa dibersihkan dari depan masjid. Panel jam di kiri atas layar berisi cerita tentang waktu salat.
+- **started_b**: Cerita dan latihan wudu ada di tempat wudu, di sebelah kiri masjid. Halaman masjid bisa dibersihkan dari depan masjid. Cerita tentang waktu salat ada di panel jam di kiri atas layarmu.
+- **reminder_b**: Cerita dan latihan wudu ada di tempat wudu, di sebelah kiri masjid. Halaman bisa dibersihkan dari depan masjid. Panel jam di kiri atas layar berisi cerita tentang waktu salat.
 - **turnin_b**: Terima kasih sudah ikut menjaga kebersihan dan mau belajar. Ini pot bunga untuk menghiasi rumahmu.
   - Pilihan: "Terima hadiah"
 - **done_b**: Lingkungan yang bersih membuat semua orang nyaman. Terima kasih ya.
@@ -173,6 +202,5 @@ Berkas: `src/data/unreviewed/ustadzDialogue.ts`. Dialog cadangan (non-agama) ada
 ## Lokasi
 
 - Masjid Qinaraya: Tempat ibadah dan berkumpul warga (materi: masjid-intro, masjid-adab)
-- Musala Qinaraya: Tempat salat yang kecil dan tenang (materi: musala-intro)
 - Tempat wudu: Tempat bersuci di dekat masjid (materi: wudu-intro)
 

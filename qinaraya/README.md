@@ -5,7 +5,7 @@
 Game simulasi kehidupan fantasi 3D (third-person) untuk anak dan keluarga.
 Acuan desain utama: `QINARAYA_MASTER_GDD.md`.
 
-**Status:** Phase 3 (Islamic lifestyle foundation) selesai: kalender Hijriah simulasi, jadwal salat simulasi, pengingat lembut, masjid dan musala yang bisa dikunjungi, materi edukasi, dan tiga quest pembelajaran. **Semua materi agama berstatus belum ditinjau dan tidak tampil di build produksi** (lihat bagian Kebijakan konten). Belum ada event musiman (Phase 4) atau multiplayer.
+**Status:** Phase 3 (Islamic lifestyle foundation) selesai: kalender Hijriah simulasi, jadwal salat simulasi, pengingat lembut, masjid dan tempat wudu yang bisa dikunjungi, aktivitas berwudu dan salat terpandu, materi edukasi, dan tiga quest pembelajaran. **Semua materi agama berstatus belum ditinjau dan tidak tampil di build produksi** (lihat bagian Kebijakan konten). Belum ada event musiman (Phase 4) atau multiplayer.
 
 ## Teknologi
 
@@ -57,11 +57,15 @@ Nara berada di dekat plaza dan memberi petunjuk tempat-tempat di desa.
 
 - **Panel jam (kiri atas)** menampilkan jam game, tanggal Hijriah simulasi, dan waktu salat berikutnya. Ketuk untuk melihat kalender dan jadwal lima waktu.
 - **Pengingat lembut** muncul tepat sekali saat waktu salat simulasi tiba. Tidak ada hukuman, skor, atau kewajiban; bisa dimatikan di pengaturan. Bunyi denting (buatan kode, bukan azan) default mati.
-- **Lokasi:** Masjid Qinaraya (utara), Musala (timur laut), dan Tempat wudu (kiri masjid). Berdiri di depannya lalu tekan E atau ketuk tombol aksi.
-- **Ustadz Harun** berdiri di depan masjid dan memberi tiga quest pembelajaran: berkenalan dengan masjid, bersih dan bersuci, dan berbagi hasil kebun (butuh quest kebun selesai). Hadiahnya hanya dekorasi.
+- **Lokasi:** Masjid Qinaraya (utara desa) dan Tempat wudu (di sebelah kiri masjid). Berdiri di depannya lalu tekan E atau ketuk tombol aksi.
+- **Berwudu:** di tempat wudu, kapan saja. Latihan terpandu enam langkah (bersiap, niat, wajah, kedua tangan, kepala, kedua kaki) dengan catatan bahwa rincian bisa berbeda dan perlu mengikuti guru.
+- **Salat:** di masjid, **hanya saat waktu salat sedang berlangsung** (jendelanya diatur di konfigurasi; contoh Dzuhur 12.00 sampai 15.00). Tombolnya berbunyi "Salat Dzuhur" dan di luar waktu tampil redup dengan penjelasan "Belum waktu salat. Berikutnya ...". Panel jam menandai "Waktu Dzuhur sekarang".
+- **Ustadz Harun** berdiri di depan masjid dan memberi tiga quest pembelajaran: berkenalan dengan masjid, bersih dan bersuci (termasuk latihan wudu), dan berbagi hasil kebun (butuh quest kebun selesai). Hadiahnya hanya dekorasi.
+
+Aktivitas wudu dan salat **opsional, tanpa skor, tanpa hadiah, tanpa pencatatan "sudah salat", dan tanpa penalti**; bisa ditutup kapan saja. Aktivitas salat sengaja berupa jeda terpandu berbentuk teks dan **bukan simulasi tata cara salat**: tidak ada animasi gerakan wudu atau salat, karena detail gerakan ibadah wajib ditinjau pihak yang kompeten lebih dulu. Hanya latihan wudu yang dihitung sebagai objektif quest belajar; salat tidak pernah menjadi objektif atau progres apa pun.
 
 **Kalender dan jadwal adalah simulasi buatan game.** Tidak memakai GPS, lokasi, atau API dunia nyata, dan bukan penetapan tanggal ibadah.
-Konfigurasi ada di `src/config/lifestyleConfig.ts`: tanggal awal, jumlah hari per bulan, kecepatan kalender, dan jam kelima salat.
+Konfigurasi ada di `src/config/lifestyleConfig.ts`: tanggal awal, jumlah hari per bulan, kecepatan kalender, serta jam dan lama jendela (`windowMinutes`) tiap waktu salat. Jendela tidak boleh melewati waktu salat berikutnya (divalidasi oleh `validateSchedule`).
 
 ### Kebijakan konten (penting)
 
@@ -71,13 +75,13 @@ Semua materi agama yang ditulis pengembang berstatus `draft` atau `needs-review`
 - Tanpa konten itu, game tetap utuh: masjid tetap bisa dikunjungi dan halamannya dibersihkan, Ustadz Harun berdialog cadangan non-agama, quest kebun berjalan normal.
 - Build mengizinkan konten belum ditinjau hanya di: development (`npm run dev`), atau build uji dengan `VITE_SHOW_UNREVIEWED_CONTENT=true`.
   **Di Vercel, atur variabel ini hanya untuk environment Preview, jangan Production.** Pada Production (`VERCEL_ENV=production`) saklar ini otomatis diabaikan.
-- Panel materi menampilkan label "Mode uji: belum ditinjau" setiap kali materi draf tampil.
+- Panel materi dan aktivitas menampilkan label "Mode uji: belum ditinjau" setiap kali konten draf tampil.
 - Tidak ada kutipan ayat atau hadis. Materi wudu dan waktu salat berstatus `needs-review` dan merujuk perbedaan rincian ke orang tua atau guru.
 - Untuk menyetujui materi, ikuti `docs/CONTENT_REVIEW.md` (dibuat otomatis, berisi seluruh teks dan kolom persetujuan). Status `approved` tanpa `reviewedBy` dan `reviewedAt` ditolak oleh test.
 
 ### Panel debug (hanya development)
 
-Tombol "DEV waktu" di bawah layar saat `npm run dev`: lompat waktu, lompat ke tanggal Hijriah (misalnya 1 Ramadan), maju sampai satu menit sebelum waktu salat berikutnya (untuk menguji pengingat), dan reset quest atau materi. Panel ini tidak ada di build produksi.
+Tombol "DEV waktu" di bawah layar saat `npm run dev`: lompat waktu (misalnya ke dalam jendela Dzuhur untuk menguji aktivitas salat), lompat ke tanggal Hijriah (misalnya 1 Ramadan), maju sampai satu menit sebelum waktu salat berikutnya (untuk menguji pengingat), dan reset quest atau materi. Panel ini tidak ada di build produksi.
 
 ## Struktur folder
 
@@ -176,7 +180,9 @@ Unit test memverifikasi logic, tetapi rasa kontrol dan tampilan harus diuji di p
 - [ ] Tanggal berganti tepat tengah malam game. Gunakan panel DEV untuk lompat ke 1 Ramadan.
 - [ ] Pengingat salat muncul sekali, tidak berulang, dan hilang sendiri. Uji dengan tombol "Maju ke ... - 1 menit".
 - [ ] Mematikan pengingat di pengaturan benar-benar menghentikannya; bunyi denting hanya bila dinyalakan.
-- [ ] Masjid, musala, dan tempat wudu: prompt muncul saat berdiri di depannya; Ustadz Harun mudah dijangkau.
+- [ ] Masjid dan tempat wudu: prompt muncul saat berdiri di depannya; Ustadz Harun mudah dijangkau.
+- [ ] Berwudu bisa dibuka kapan saja dan ditutup di tengah jalan; Salat hanya aktif di dalam jendela waktu salat, dan redup dengan penjelasan di luar itu.
+- [ ] Pengingat salat di build uji menyertakan saran "berwudu dan salat di masjid, atau lanjut bermain"; tidak ada yang berubah bila diabaikan.
 - [ ] Materi terbaca per halaman (tombol Kembali, Lanjut, Selesai) dan terbaca baik di layar kecil.
 - [ ] Tiga quest berjalan sampai selesai dan hadiah dekorasi masuk tas.
 - [ ] Build produksi (`npm run build && npm run preview`): tidak ada materi agama, masjid tetap bisa dibersihkan, dialog Ustadz cadangan.
@@ -188,6 +194,7 @@ Unit test memverifikasi logic, tetapi rasa kontrol dan tampilan harus diuji di p
 - Semua model dan ikon adalah placeholder (bentuk dasar dan emoji). Aset final menyusul pada fase aset.
 - Kamera belum menghindari dinding, dan belum ada bayangan dinamis.
 - Belum ada pembuatan karakter, hewan ternak, memasak, jual-beli, dan Qina Coin.
+- **Tidak ada animasi gerakan wudu atau salat di 3D.** Aktivitasnya hanya terpandu lewat teks. Animasi baru boleh dibuat bila peninjau memberi dan menyetujui urutan gerakannya.
 - **Belum ada peninjau konten.** Seluruh materi agama masih draf. Hingga ditinjau, build produksi tidak memuatnya.
 - Event Islami (Ramadan, Idulfitri, Iduladha, dan lain-lain) belum ada; itu Phase 4. Bila `calendarDaysPerGameDay` lebih dari 1, pencocokan event pada hari tertentu perlu memperhitungkan hari kalender yang terlewati.
 - Kalender memakai 30 hari per bulan agar sederhana; bulan Hijriah sebenarnya 29 atau 30 hari.

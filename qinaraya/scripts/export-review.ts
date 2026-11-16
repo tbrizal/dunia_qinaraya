@@ -1,4 +1,5 @@
 import { writeFileSync } from "node:fs";
+import { ACTIVITIES } from "../src/data/activities.ts";
 import { DIALOGUES } from "../src/data/dialogues.ts";
 import { LEARNING_CONTENT } from "../src/data/learning.ts";
 import { PLACES } from "../src/data/places.ts";
@@ -57,6 +58,29 @@ for (const c of LEARNING_CONTENT) {
   out();
 }
 
+out("## Aktivitas terpandu (wudu dan salat)");
+out();
+out("Berkas: `src/data/unreviewed/activities.ts`. Aktivitas ini sengaja hanya berupa teks langkah demi langkah:");
+out("**tidak ada animasi gerakan wudu atau salat**, tidak ada skor, hadiah, atau pencatatan, dan tidak ada penalti bila tidak dilakukan.");
+out("Peninjau juga diminta memutuskan apakah animasi gerakan boleh dibuat, dan bila ya, memberikan urutan yang disetujui.");
+out();
+for (const a of ACTIVITIES) {
+  out(`### ${a.title} (\`${a.id}\`)`);
+  out();
+  out(`- Status saat ini: **${reviewLabel(a.reviewStatus)}** (\`${a.reviewStatus}\`)`);
+  out(`- Lokasi: ${a.placeId}, ketersediaan: ${a.availability === "prayer-window" ? "hanya saat waktu salat sedang berlangsung" : "kapan saja"}`);
+  out(`- Catatan untuk peninjau: ${a.reviewNotes}`);
+  out();
+  a.steps.forEach((step, i) => out(`${i + 1}. **${step.title}**: ${step.text}`));
+  out();
+  out(`- Penutup: ${a.closing}`);
+  if (a.reminderHint) out(`- Kalimat pada pengingat waktu salat: ${a.reminderHint}`);
+  out();
+  out("- [ ] Disetujui  [ ] Perlu revisi  | Peninjau: ____________  Tanggal: ____________");
+  out("- Catatan peninjau: ");
+  out();
+}
+
 out("## Quest pembelajaran");
 out();
 for (const q of QUEST_LIST.filter((x) => x.category === "islamic-learning")) {
@@ -92,4 +116,4 @@ for (const p of PLACES) out(`- ${p.name}: ${p.blurb} (materi: ${p.contentIds.joi
 out();
 
 writeFileSync(new URL("../docs/CONTENT_REVIEW.md", import.meta.url), lines.join("\n") + "\n");
-console.log(`docs/CONTENT_REVIEW.md dibuat: ${LEARNING_CONTENT.length} materi, ${QUEST_LIST.filter((q) => q.category === "islamic-learning").length} quest, ${Object.keys(harun.nodes).length} node dialog.`);
+console.log(`docs/CONTENT_REVIEW.md dibuat: ${LEARNING_CONTENT.length} materi, ${ACTIVITIES.length} aktivitas, ${QUEST_LIST.filter((q) => q.category === "islamic-learning").length} quest, ${Object.keys(harun.nodes).length} node dialog.`);

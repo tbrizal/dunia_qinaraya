@@ -113,7 +113,7 @@ test("NPC tidak berada di dalam bangunan atau di atas petak kebun", () => {
   }
 });
 
-test("titik berdiri lokasi (masjid, musala, tempat wudu) bebas collider dan dekat bangunannya", () => {
+test("titik berdiri lokasi (masjid dan tempat wudu) bebas collider dan dekat bangunannya", () => {
   for (const place of PLACES) {
     assert.equal(resolveCollisions({ x: place.x, z: place.z }, player.radius, colliders, bounds), false, `${place.id}: titik terhalang`);
     const building = buildings.find((b) => b.id === place.id || (place.id === "masjid" && b.id === "mosque"));

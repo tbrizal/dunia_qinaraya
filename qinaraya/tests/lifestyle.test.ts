@@ -6,6 +6,7 @@ import { DIALOGUES } from "../src/data/dialogues.ts";
 import { ITEMS } from "../src/data/items.ts";
 import { LEARNING_CONTENT, getLearningContent, getVisibleLearningContent } from "../src/data/learning.ts";
 import { NPCS } from "../src/data/npcs.ts";
+import { ACTIVITIES, getVisibleActivity } from "../src/data/activities.ts";
 import { PLACES } from "../src/data/places.ts";
 import { QUESTS, QUEST_LIST } from "../src/data/quests.ts";
 import {
@@ -22,6 +23,7 @@ import { selectEntryNode } from "../src/systems/dialogue/dialogue.ts";
 import { describePoi } from "../src/systems/interaction/actions.ts";
 import { addAll, countItem, createInventory, removeAnyOf } from "../src/systems/inventory/inventory.ts";
 import {
+  getActivePrayer,
   getCurrentPrayer,
   getNextPrayer,
   getPrayerNotifications,
@@ -39,6 +41,7 @@ import type { TimeChangeEvent } from "../src/systems/time/gameClock.ts";
 registerUnreviewedContent();
 
 const DAY = 1440;
+const NOON = { hour: 12, minute: 30 };
 const cal: HijriCalendarConfig = { daysPerMonth: 30, calendarDaysPerGameDay: 1, startingDate: { day: 1, month: 1, year: 1 } };
 const schedule = prayerScheduleConfig;
 
@@ -109,13 +112,13 @@ test("konfigurasi jadwal valid dan lima waktu lengkap", () => {
 
 test("validateSchedule menangkap kesalahan konfigurasi", () => {
   const bad: PrayerScheduleEntry[] = [
-    { prayer: "subuh", hour: 25, minute: 0, enabled: true, notificationEnabled: true },
-    { prayer: "subuh", hour: 5, minute: 70, enabled: true, notificationEnabled: true },
+    { prayer: "subuh", hour: 25, minute: 0, windowMinutes: 60, enabled: true, notificationEnabled: true },
+    { prayer: "subuh", hour: 5, minute: 70, windowMinutes: 60, enabled: true, notificationEnabled: true },
   ];
   assert.ok(validateSchedule(bad).length >= 3);
   const unordered: PrayerScheduleEntry[] = [
-    { prayer: "dzuhur", hour: 12, minute: 0, enabled: true, notificationEnabled: true },
-    { prayer: "subuh", hour: 5, minute: 0, enabled: true, notificationEnabled: true },
+    { prayer: "dzuhur", hour: 12, minute: 0, windowMinutes: 60, enabled: true, notificationEnabled: true },
+    { prayer: "subuh", hour: 5, minute: 0, windowMinutes: 60, enabled: true, notificationEnabled: true },
   ];
   assert.ok(validateSchedule(unordered).length > 0);
 });
@@ -235,7 +238,7 @@ test("hanya approved yang tampil di produksi; draft dan needs-review hanya bila 
 });
 
 test("setiap materi punya status eksplisit; tidak ada yang approved tanpa reviewer", () => {
-  assert.ok(LEARNING_CONTENT.length >= 5);
+  assert.ok(LEARNING_CONTENT.length >= 4);
   for (const c of LEARNING_CONTENT) {
     assert.ok(["draft", "needs-review", "approved"].includes(c.reviewStatus), c.id);
     if (c.reviewStatus === "approved") assert.ok(c.reviewedBy && c.reviewedAt, `${c.id}: approved tanpa reviewedBy/reviewedAt`);
@@ -305,6 +308,15 @@ test("data Phase 3 saling merujuk dengan benar", () => {
   }
 });
 
+test("id objektif unik per quest dan layout lama merujuk id yang valid", () => {
+  for (const q of QUEST_LIST) {
+    const ids = q.objectives.map((o) => o.id);
+    assert.ok(ids.every((id) => id.trim().length > 0), `${q.id}: ada objektif tanpa id`);
+    assert.equal(new Set(ids).size, ids.length, `${q.id}: id objektif kembar`);
+  }
+  assert.deepEqual(QUESTS.learn_wudu!.legacyObjectiveLayouts![3], ["learn-wudu-intro", "clean-yard", "learn-prayer-times"]);
+});
+
 test("minimal tiga quest pembelajaran Islami", () => {
   assert.ok(QUEST_LIST.filter((q) => q.category === "islamic-learning").length >= 3);
 });
@@ -325,7 +337,7 @@ test("tidak ada hadiah berupa koin, skor, atau item yang bisa hilang", () => {
 const harun = DIALOGUES["ustadz-harun"]!;
 
 test("di produksi (konten belum ditinjau) Ustadz Harun hanya menampilkan cadangan non-agama", () => {
-  for (const quests of [{}, { learn_masjid: { status: "active", objectives: [0, 0, 0] } }] as QuestState[]) {
+  for (const quests of [{}, { learn_masjid: { status: "active", objectives: [0, 0] } }] as QuestState[]) {
     assert.equal(selectEntryNode(harun, quests, false), "unavailable");
   }
   assert.doesNotMatch(harun.nodes.unavailable!.text, /masjid|wudu|salat|ibadah/i);
@@ -336,7 +348,14 @@ function ready(state: QuestState, id: string): QuestState {
   let s = startQuest(state, quest)!;
   for (const o of quest.objectives) {
     for (let i = 0; i < o.count; i++) {
-      const event = o.type === "learn" ? { type: "learn" as const, contentId: o.targetId! } : o.type === "clean" ? { type: "clean" as const } : { type: "give" as const, quantity: 1 };
+      const event =
+        o.type === "learn"
+          ? { type: "learn" as const, contentId: o.targetId! }
+          : o.type === "practice"
+            ? { type: "practice" as const, activityId: o.targetId! }
+            : o.type === "clean"
+              ? { type: "clean" as const }
+              : { type: "give" as const, quantity: 1 };
       s = applyEvent(s, event).state;
     }
   }
@@ -370,17 +389,17 @@ test("alur dialog Ustadz Harun di dev mengikuti urutan quest", () => {
 test("quest belajar: objektif learn hanya menghitung materi yang tepat", () => {
   let s = startQuest({}, QUESTS.learn_masjid!)!;
   s = applyEvent(s, { type: "learn", contentId: "wudu-intro" }).state;
-  assert.deepEqual(s.learn_masjid!.objectives, [0, 0, 0]);
+  assert.deepEqual(s.learn_masjid!.objectives, [0, 0]);
   s = applyEvent(s, { type: "learn", contentId: "masjid-intro" }).state;
-  assert.deepEqual(s.learn_masjid!.objectives, [1, 0, 0]);
+  assert.deepEqual(s.learn_masjid!.objectives, [1, 0]);
   s = applyEvent(s, { type: "learn", contentId: "masjid-intro" }).state;
-  assert.deepEqual(s.learn_masjid!.objectives, [1, 0, 0], "membaca ulang tidak menambah progres");
+  assert.deepEqual(s.learn_masjid!.objectives, [1, 0], "membaca ulang tidak menambah progres");
 });
 
 test("quest bersih-bersih dan berbagi menghitung aksi masing-masing", () => {
   let s = startQuest({}, QUESTS.learn_wudu!)!;
   for (let i = 0; i < 5; i++) s = applyEvent(s, { type: "clean" }).state;
-  assert.equal(s.learn_wudu!.objectives[1], 3, "dibatasi sampai target");
+  assert.equal(s.learn_wudu!.objectives[2], 3, "dibatasi sampai target");
   let t = startQuest({}, QUESTS.share_harvest!)!;
   t = applyEvent(t, { type: "give", quantity: 2 }).state;
   assert.equal(t.share_harvest!.status, "ready");
@@ -407,15 +426,15 @@ test("pelacak HUD: produksi hanya menampilkan quest non-agama, dev menampilkan y
 // ---------- Lokasi dan inventory ----------
 
 test("lokasi: aksi materi hanya muncul bila materi boleh tampil", () => {
-  assert.deepEqual(describePoi("masjid", [], false)!.actions.map((a) => a.id), ["clean"], "produksi: hanya aktivitas bersih-bersih");
-  assert.equal(describePoi("musala", [], false), null, "tanpa aksi: tidak ada prompt");
-  assert.equal(describePoi("wudu", [], false), null);
-  assert.deepEqual(describePoi("masjid", [], true)!.actions.map((a) => a.id), ["learn:masjid-intro", "learn:masjid-adab", "clean"]);
-  assert.equal(describePoi("tidak-ada", [], true), null);
+  assert.deepEqual(describePoi("masjid", [], NOON, false)!.actions.map((a) => a.id), ["clean"], "produksi: hanya aktivitas bersih-bersih");
+  assert.equal(describePoi("wudu", [], NOON, false), null, "tanpa aksi: tidak ada prompt");
+  assert.equal(describePoi("musala", [], NOON, true), null, "musala sudah dihapus dari desa");
+  assert.deepEqual(describePoi("masjid", [], NOON, true)!.actions.map((a) => a.id), ["learn:masjid-intro", "learn:masjid-adab", "activity:salat-moment", "clean"]);
+  assert.equal(describePoi("tidak-ada", [], NOON, true), null);
 });
 
 test("lokasi menandai materi yang sudah dipelajari", () => {
-  const view = describePoi("masjid", ["masjid-intro"], true)!;
+  const view = describePoi("masjid", ["masjid-intro"], NOON, true)!;
   assert.match(view.actions[0]!.label, /\(sudah\)/);
   assert.match(view.status!, /1\/2/);
 });
@@ -429,4 +448,133 @@ test("removeAnyOf: membagikan hasil panen apa pun, atomik bila tidak cukup", () 
   assert.equal(removeAnyOf(inv, crops, 4), null);
   assert.equal(countItem(inv, "carrot"), 1, "inventory asal tidak berubah saat gagal");
   inv = after;
+});
+
+// ---------- Jendela waktu salat ----------
+
+test("jadwal dan jendela waktu salat konfigurasi valid (jendela tidak melewati waktu berikutnya)", () => {
+  assert.deepEqual(validateSchedule(schedule), []);
+  for (const e of schedule) assert.ok(e.windowMinutes > 0, e.prayer);
+});
+
+test("validateSchedule menolak jendela yang melewati waktu salat berikutnya atau tidak positif", () => {
+  const tooLong = schedule.map((e) => (e.prayer === "dzuhur" ? { ...e, windowMinutes: 400 } : e));
+  assert.ok(validateSchedule(tooLong).some((m) => m.includes("melewati")));
+  const zero = schedule.map((e) => (e.prayer === "ashar" ? { ...e, windowMinutes: 0 } : e));
+  assert.ok(validateSchedule(zero).some((m) => m.includes("windowMinutes")));
+  const wrap = schedule.map((e) => (e.prayer === "isya" ? { ...e, windowMinutes: 600 } : e));
+  assert.ok(validateSchedule(wrap).some((m) => m.includes("isya")), "jendela Isya tidak boleh melewati Subuh berikutnya");
+});
+
+test("getActivePrayer: aktif tepat saat tiba sampai sebelum jendela berakhir", () => {
+  const at = (h: number, m: number) => getActivePrayer(h, m, schedule);
+  assert.equal(at(11, 59), null);
+  assert.equal(at(12, 0)!.prayer, "dzuhur");
+  assert.equal(at(12, 0)!.minutesLeft, 180);
+  assert.equal(at(14, 59)!.prayer, "dzuhur");
+  assert.equal(at(14, 59)!.minutesLeft, 1);
+  assert.equal(at(15, 0), null, "jendela berakhir tepat saat 180 menit terlewati");
+  assert.equal(at(15, 30)!.prayer, "ashar");
+  assert.equal(at(18, 15)!.prayer, "maghrib");
+  assert.equal(at(19, 30)!.prayer, "isya");
+  assert.equal(at(23, 29)!.prayer, "isya");
+  assert.equal(at(23, 30), null);
+  assert.equal(at(3, 0), null);
+  assert.equal(at(5, 0)!.prayer, "subuh");
+});
+
+test("getActivePrayer menangani jendela yang melewati tengah malam dan jadwal nonaktif", () => {
+  const late = schedule.map((e) => (e.prayer === "isya" ? { ...e, hour: 22, minute: 0, windowMinutes: 420 } : e)).filter((e) => e.prayer === "isya");
+  assert.equal(getActivePrayer(23, 0, late)!.prayer, "isya");
+  assert.equal(getActivePrayer(1, 0, late)!.prayer, "isya", "masih berlaku setelah lewat tengah malam");
+  assert.equal(getActivePrayer(5, 0, late), null);
+  const off = schedule.map((e) => ({ ...e, enabled: false }));
+  assert.equal(getActivePrayer(12, 30, off), null);
+});
+
+// ---------- Aktivitas wudu dan salat ----------
+
+test("aktivitas: status review eksplisit, tidak ada yang approved tanpa peninjau, dan merujuk lokasi yang ada", () => {
+  assert.ok(ACTIVITIES.length >= 2);
+  for (const a of ACTIVITIES) {
+    assert.ok(["draft", "needs-review"].includes(a.reviewStatus), `${a.id}: belum ada peninjau, tidak boleh approved`);
+    assert.ok(a.reviewNotes.trim().length > 0);
+    assert.ok(PLACES.some((p) => p.id === a.placeId && p.activityIds.includes(a.id)), `${a.id}: tidak terdaftar di lokasi ${a.placeId}`);
+    assert.ok(a.steps.length >= 3 && a.steps.every((st) => st.title.trim() && st.text.trim().length > 10));
+    assert.ok(a.closing.trim().length > 10);
+  }
+  assert.equal(new Set(ACTIVITIES.map((a) => a.id)).size, ACTIVITIES.length);
+  for (const place of PLACES) for (const id of place.activityIds) assert.ok(ACTIVITIES.some((a) => a.id === id), `${place.id}: aktivitas ${id} tidak ada`);
+});
+
+test("aktivitas tidak memakai bahasa skor, pahala, hukuman, atau klaim menggantikan ibadah, dan tidak ada aksara Arab", () => {
+  const text = ACTIVITIES.flatMap((a) => [a.title, a.closing, a.reminderHint ?? "", ...a.steps.flatMap((st) => [st.title, st.text])]).join(" ").toLowerCase();
+  for (const banned of ["pahala", "dosa", "hukuman:", "denda", "skor", "poin", "wajib bermain", "gagal"]) assert.ok(!text.includes(banned), banned);
+  assert.ok(!/[\u0600-\u06FF]/.test(text));
+});
+
+test("aktivitas salat menegaskan bahwa game tidak menggantikan ibadah dan tidak ada nilai atau hadiah", () => {
+  const salat = ACTIVITIES.find((a) => a.kind === "salat")!;
+  const all = [...salat.steps.map((st) => st.text), salat.closing].join(" ").toLowerCase();
+  assert.ok(all.includes("tidak menggantikan"));
+  assert.ok(all.includes("tidak ada nilai atau hadiah"));
+  assert.ok(all.includes("tidak apa-apa"));
+  assert.equal(salat.availability, "prayer-window");
+});
+
+test("aktivitas wudu menyebut perbedaan rincian dan merujuk ke guru; tidak memuat lafaz bacaan", () => {
+  const wudu = ACTIVITIES.find((a) => a.kind === "wudu")!;
+  const all = [...wudu.steps.map((st) => st.text), wudu.closing].join(" ").toLowerCase();
+  assert.ok(all.includes("berbeda") && all.includes("guru"));
+  assert.equal(wudu.availability, "anytime");
+  assert.equal(wudu.reviewStatus, "needs-review");
+});
+
+test("aktivitas draf tersembunyi di produksi dan tampil di dev", () => {
+  assert.equal(getVisibleActivity("salat-moment", false), undefined);
+  assert.equal(getVisibleActivity("wudu-practice", false), undefined);
+  assert.equal(getVisibleActivity("salat-moment", true)?.id, "salat-moment");
+});
+
+test("aksi salat di masjid: aktif saat waktu salat berlangsung, redup dengan penjelasan di luar waktu", () => {
+  const salat = (h: number, m: number) => describePoi("masjid", [], { hour: h, minute: m }, true)!.actions.find((a) => a.id === "activity:salat-moment")!;
+
+  const inWindow = salat(12, 30);
+  assert.equal(inWindow.enabled, true);
+  assert.equal(inWindow.label, "Salat Dzuhur");
+
+  const outside = salat(10, 0);
+  assert.equal(outside.enabled, false);
+  assert.equal(outside.label, "Salat");
+  assert.equal(outside.hint, "Belum waktu salat. Berikutnya Dzuhur 12.00");
+
+  assert.equal(salat(16, 0).label, "Salat Ashar");
+  assert.equal(salat(21, 0).label, "Salat Isya");
+  assert.equal(salat(23, 45).hint, "Belum waktu salat. Berikutnya Subuh 05.00");
+});
+
+test("aksi wudu tersedia kapan saja, tidak bergantung pada waktu salat", () => {
+  for (const [h, m] of [[3, 0], [10, 0], [12, 30], [23, 45]] as const) {
+    const wudu = describePoi("wudu", [], { hour: h, minute: m }, true)!.actions.find((a) => a.id === "activity:wudu-practice")!;
+    assert.equal(wudu.enabled, true, `${h}:${m}`);
+    assert.equal(wudu.label, "Berwudu");
+  }
+});
+
+test("hanya latihan wudu yang menjadi objektif quest; salat tidak dicatat sebagai progres apa pun", () => {
+  const q = startQuest({}, QUESTS.learn_wudu!)!;
+  const afterSalat = applyEvent(q, { type: "practice", activityId: "salat-moment" });
+  assert.equal(afterSalat.state, q, "salat tidak mengubah progres quest");
+  const afterWudu = applyEvent(q, { type: "practice", activityId: "wudu-practice" });
+  assert.deepEqual(afterWudu.state.learn_wudu!.objectives, [0, 1, 0, 0]);
+  assert.ok(QUESTS.learn_wudu!.objectives.some((o) => o.type === "practice" && o.targetId === "wudu-practice"));
+  for (const quest of QUEST_LIST) for (const o of quest.objectives) assert.ok(!(o.type === "practice" && o.targetId === "salat-moment"), "salat tidak boleh jadi objektif quest");
+});
+
+test("musala sudah tidak ada: tidak ada lokasi, materi, atau teks yang menyebutnya", () => {
+  assert.ok(!PLACES.some((p) => p.id === "musala"));
+  assert.ok(!LEARNING_CONTENT.some((c) => c.id.includes("musala")));
+  // Id lama di legacyObjectiveLayouts sengaja tersisa untuk memetakan save lama; itu bukan teks yang tampil.
+  const text = JSON.stringify([LEARNING_CONTENT, ACTIVITIES, DIALOGUES, QUEST_LIST], (key, value) => (key === "legacyObjectiveLayouts" ? undefined : value)).toLowerCase();
+  assert.ok(!text.includes("musala"), "masih ada teks yang menyebut musala");
 });

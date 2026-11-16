@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { registerUnreviewedContent } from "../src/data/unreviewed/index.ts";
 import { addAll, createInventory } from "../src/systems/inventory/inventory.ts";
 import { createPlot, plantCrop, tillPlot, waterPlot } from "../src/systems/farming/farmPlot.ts";
-import { SAVE_VERSION, parseSave, serializeSave } from "../src/systems/save/saveSystem.ts";
+import { SAVE_VERSION, parseSave, serializeQuests, serializeSave } from "../src/systems/save/saveSystem.ts";
 import type { SaveContext, SaveData } from "../src/systems/save/saveSystem.ts";
 
 // Meniru build development: materi draf dikenal, sehingga id-nya valid pada save.
@@ -147,6 +147,57 @@ test("quest: status tidak valid dibuang, progres dibatasi sesuai objektif", () =
 
   raw.quests = { tutorial_farming: { status: "curang", objectives: [1, 1, 1, 1] } };
   assert.deepEqual(parseOk(JSON.stringify(raw)).quests, {});
+});
+
+test("quest dari versi lama yang objektifnya berubah: status disesuaikan agar tidak macet", () => {
+  const raw = JSON.parse(serializeSave(sample()));
+  // Quest A dulu 3 objektif (dengan musala). Sekarang 2: [1,1,0] aktif harus menjadi siap diserahkan.
+  raw.quests = { learn_masjid: { status: "active", objectives: [1, 1, 0] } };
+  assert.equal(parseOk(JSON.stringify(raw)).quests.learn_masjid!.status, "ready");
+  assert.deepEqual(parseOk(JSON.stringify(raw)).quests.learn_masjid!.objectives, [1, 1]);
+
+  // Quest B kini punya objektif latihan wudu. Save lama [1,3,1] berstatus ready harus kembali aktif.
+  raw.quests = { learn_wudu: { status: "ready", objectives: [1, 3, 1] } };
+  const b = parseOk(JSON.stringify(raw)).quests.learn_wudu!;
+  assert.equal(b.status, "active", "ada objektif baru yang belum dilakukan");
+  assert.deepEqual(b.objectives, [1, 0, 3, 1], "progres lama pindah ke objektif yang benar, bukan bergeser");
+
+  // Quest yang sudah selesai tidak diubah (hadiah sudah diterima).
+  raw.quests = { learn_wudu: { status: "completed", objectives: [1, 3, 1] } };
+  assert.equal(parseOk(JSON.stringify(raw)).quests.learn_wudu!.status, "completed");
+});
+
+test("progres quest disimpan berdasarkan id objektif sehingga urutan boleh berubah", () => {
+  const raw = JSON.parse(serializeSave(sample()));
+  raw.quests = {
+    learn_wudu: {
+      status: "active",
+      objectives: [3, 1, 0, 0],
+      objectiveIds: ["clean-yard", "learn-wudu-intro", "practice-wudu", "learn-prayer-times"],
+    },
+  };
+  assert.deepEqual(parseOk(JSON.stringify(raw)).quests.learn_wudu!.objectives, [1, 0, 3, 0]);
+});
+
+test("objektif yang dihapus pada versi baru dibuang, dan id asing diabaikan", () => {
+  const raw = JSON.parse(serializeSave(sample()));
+  raw.quests = { learn_masjid: { status: "active", objectives: [1, 1, 1], objectiveIds: ["learn-masjid-intro", "id-hantu", "learn-musala-intro"] } };
+  assert.deepEqual(parseOk(JSON.stringify(raw)).quests.learn_masjid!.objectives, [1, 0]);
+});
+
+test("serializeQuests menyertakan id objektif dan hasilnya kembali utuh saat dibaca", () => {
+  const quests = { learn_wudu: { status: "active" as const, objectives: [1, 0, 2, 0] }, tutorial_farming: { status: "ready" as const, objectives: [1, 1, 1, 1] } };
+  const saved = serializeQuests(quests);
+  assert.deepEqual(saved.learn_wudu!.objectiveIds, ["learn-wudu-intro", "practice-wudu", "clean-yard", "learn-prayer-times"]);
+  const raw = JSON.parse(serializeSave(sample()));
+  raw.quests = saved;
+  assert.deepEqual(parseOk(JSON.stringify(raw)).quests, quests);
+});
+
+test("id materi musala dari save lama dibuang tanpa merusak sisanya", () => {
+  const raw = JSON.parse(serializeSave(sample()));
+  raw.learning = { learned: ["musala-intro", "masjid-intro"] };
+  assert.deepEqual(parseOk(JSON.stringify(raw)).learning.learned, ["masjid-intro"]);
 });
 
 test("posisi, pengaturan, dan nama profil yang rusak memakai nilai default", () => {
