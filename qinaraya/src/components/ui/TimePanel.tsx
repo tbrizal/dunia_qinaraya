@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { hijriCalendarConfig, prayerScheduleConfig } from "../../config/lifestyleConfig";
 import { getVisibleLearningContent } from "../../data/learning";
+import { GENERAL_CONTENT_IDS } from "../../data/places";
 import { openLearning } from "../../stores/learningActions";
 import { useClockStore } from "../../stores/useClockStore";
 import { useUiStore } from "../../stores/useUiStore";
@@ -34,7 +35,7 @@ export function TimePanel() {
   const next = getNextPrayer(state.hour, state.minute, prayerScheduleConfig);
   const current = getActivePrayer(state.hour, state.minute, prayerScheduleConfig)?.prayer ?? null;
   const dayNumber = Math.floor(totalMinutes / MINUTES_PER_DAY) + 1;
-  const canLearn = getVisibleLearningContent("prayer-times") !== undefined;
+  const guides = GENERAL_CONTENT_IDS.map((id) => getVisibleLearningContent(id)).filter((c) => c !== undefined);
 
   return (
     <div
@@ -99,16 +100,18 @@ export function TimePanel() {
         </p>
 
         <div className="flex flex-col gap-2">
-          {canLearn && (
+          {guides.length > 0 && <h3 className="mt-1 text-sm font-semibold">Panduan ibadah</h3>}
+          {guides.map((c) => (
             <button
+              key={c.id}
               type="button"
-              onClick={() => openLearning("prayer-times")}
+              onClick={() => openLearning(c.id)}
               className="min-h-12 rounded-xl text-base font-semibold"
               style={{ background: "rgba(230, 216, 180, 0.9)", color: "var(--qin-night)" }}
             >
-              Mengenal waktu salat
+              {c.shortTitle}
             </button>
-          )}
+          ))}
           <button
             ref={closeRef}
             type="button"

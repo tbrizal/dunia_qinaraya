@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import type { PrayerId, WorshipStepView } from "../data/worship";
+import { worshipPerformance } from "../systems/worship/performance";
 import { useSettingsStore } from "./useSettingsStore";
 
 export interface ActiveDialogue {
@@ -13,10 +15,20 @@ export interface ActiveLearning {
 
 export interface ActiveActivity {
   activityId: string;
-  /** 0..steps.length; indeks terakhir adalah halaman penutup. */
-  step: number;
-  /** Nama waktu salat yang sedang berlangsung saat aktivitas dibuka (untuk teks {prayer}). */
+  kind: "wudu" | "salat";
+  title: string;
+  /** "choose": memilih salat yang akan dipelajari (di luar waktu salat). */
+  stage: "choose" | "play";
+  /** True bila bukan waktu salat yang sedang berlangsung (latihan). */
+  practice: boolean;
+  prayer: PrayerId | null;
+  /** Nama waktu salat sesuai panduan (Zuhur, Asar, ...). */
   prayerLabel: string;
+  steps: WorshipStepView[];
+  /** 0..steps.length; indeks terakhir adalah halaman penutup. */
+  index: number;
+  /** Bertambah untuk meminta gerakan diulang. */
+  replay: number;
 }
 
 interface UiStore {
@@ -57,10 +69,13 @@ export const useUiStore = create<UiStore>((set) => ({
   showPrayerNotice: (text) => set({ prayerNotice: { id: ++toastCounter, text } }),
 }));
 
-/** Saat ada panel terbuka, gerakan dan waktu dunia dijeda. */
+/** Saat ada panel terbuka atau pelaku ibadah belum selesai kembali berdiri, gerakan dan waktu dunia dijeda. */
 export function isModalOpen(): boolean {
   const ui = useUiStore.getState();
   return (
-    useSettingsStore.getState().settingsOpen || ui.inventoryOpen || ui.timePanelOpen || ui.dialogue !== null || ui.learning !== null || ui.activity !== null
+    useSettingsStore.getState().settingsOpen || ui.inventoryOpen || ui.timePanelOpen || ui.dialogue !== null ||
+    ui.learning !== null ||
+    ui.activity !== null ||
+    worshipPerformance.phase !== "idle"
   );
 }

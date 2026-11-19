@@ -106,8 +106,8 @@ const pad = (n: number) => String(n).padStart(2, "0");
 
 /**
  * Lokasi (masjid dan tempat wudu). Materi dan aktivitas yang belum boleh tampil di build ini tidak
- * muncul sebagai aksi. Aktivitas bertipe "prayer-window" tampil redup di luar waktu salat dan
- * menjelaskan kapan tersedia. Mengembalikan null bila lokasi tidak punya aksi sama sekali.
+ * muncul sebagai aksi. Salat sungguhan hanya saat waktunya berlangsung; di luar itu tersedia
+ * "Latihan salat" (bila diizinkan) atau tampil redup dengan penjelasan kapan tersedia. Mengembalikan null bila lokasi tidak punya aksi sama sekali.
  */
 export function describePoi(
   placeId: string,
@@ -137,9 +137,14 @@ export function describePoi(
     if (!activity) continue;
     const prayerLabel = active ? PRAYER_LABELS[active.prayer] : "";
     if (activity.availability === "prayer-window" && !active) {
-      const next = getNextPrayer(clock.hour, clock.minute, schedule);
-      const hint = next ? `Belum waktu salat. Berikutnya ${PRAYER_LABELS[next.prayer]} ${pad(next.hour)}.${pad(next.minute)}` : "Belum waktu salat";
-      actions.push({ id: `activity:${activity.id}`, label: activity.actionLabel.replace("{prayer}", "").trim(), enabled: false, hint });
+      if (activity.practiceOutsideWindow) {
+        // Di luar waktu salat tetap bisa berlatih: pemain memilih salat yang ingin dipelajari.
+        actions.push({ id: `activity:${activity.id}`, label: activity.practiceLabel ?? "Latihan", enabled: true });
+      } else {
+        const next = getNextPrayer(clock.hour, clock.minute, schedule);
+        const hint = next ? `Belum waktu salat. Berikutnya ${PRAYER_LABELS[next.prayer]} ${pad(next.hour)}.${pad(next.minute)}` : "Belum waktu salat";
+        actions.push({ id: `activity:${activity.id}`, label: activity.actionLabel.replace("{prayer}", "").trim(), enabled: false, hint });
+      }
     } else {
       actions.push({ id: `activity:${activity.id}`, label: activity.actionLabel.replace("{prayer}", prayerLabel).trim(), enabled: true });
     }

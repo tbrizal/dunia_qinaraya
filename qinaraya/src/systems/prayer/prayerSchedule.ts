@@ -19,8 +19,8 @@ export interface PrayerScheduleEntry {
 
 export const PRAYER_LABELS: Record<PrayerName, string> = {
   subuh: "Subuh",
-  dzuhur: "Dzuhur",
-  ashar: "Ashar",
+  dzuhur: "Zuhur",
+  ashar: "Asar",
   maghrib: "Magrib",
   isya: "Isya",
 };

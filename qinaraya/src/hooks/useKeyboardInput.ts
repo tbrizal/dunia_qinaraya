@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { advanceDialogue, chooseDialogueOption, closeDialogue } from "../stores/dialogueActions";
-import { activityNext, closeActivity } from "../stores/activityActions";
+import { activityNext, activityPrev, closeActivity } from "../stores/activityActions";
 import { closeLearning, learningNext } from "../stores/learningActions";
 import { triggerAction } from "../stores/gameActions";
 import { useSettingsStore } from "../stores/useSettingsStore";
@@ -77,9 +77,13 @@ export function useKeyboardInput(): void {
       const digit = DIGITS[e.code];
 
       if (ui.activity) {
-        if (!e.repeat && activates) {
+        if (e.repeat) return;
+        if (activates || e.code === "ArrowRight") {
           e.preventDefault();
           activityNext();
+        } else if (e.code === "ArrowLeft") {
+          e.preventDefault();
+          activityPrev();
         }
         return;
       }

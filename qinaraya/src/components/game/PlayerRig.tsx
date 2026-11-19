@@ -4,12 +4,15 @@ import type { Group } from "three";
 import { gameConfig } from "../../config/gameConfig";
 import { useSettingsStore } from "../../stores/useSettingsStore";
 import { isModalOpen } from "../../stores/useUiStore";
+import { cameraDirector } from "../../systems/camera/cameraDirector";
 import { applyCameraInput, computeCameraPosition, createCameraRig, followTarget } from "../../systems/camera/cameraRig";
 import { consumeCameraInput, isSprintHeld, readMoveVector, resetInput } from "../../systems/input/inputState";
 import type { Collider, WorldBounds } from "../../systems/movement/collision";
 import { stepPlayer } from "../../systems/movement/stepPlayer";
 import type { MoveInput } from "../../systems/movement/stepPlayer";
+import { dampFactor, wrapAngle } from "../../systems/movement/movementMath";
 import { playerState } from "../../systems/player/playerState";
+import { worshipPerformance } from "../../systems/worship/performance";
 import { CharacterModel } from "./CharacterModel";
 
 interface PlayerRigProps {
@@ -57,14 +60,24 @@ export function PlayerRig({ colliders, bounds }: PlayerRigProps) {
       readMoveVector(move);
     }
 
-    applyCameraInput(rig, drag.dx, drag.dy, drag.zoom, cameraSensitivity, camCfg);
+    const directed = cameraDirector.active;
+    if (directed) {
+      // Adegan khusus (aktivitas ibadah): kamera menuju sudut pengarah dan input kamera pemain diabaikan.
+      const k = dampFactor(3, Math.min(delta, 0.1));
+      rig.yaw += wrapAngle(cameraDirector.yaw - rig.yaw) * k;
+      rig.pitch += (cameraDirector.pitch - rig.pitch) * k;
+      rig.distance += (cameraDirector.distance - rig.distance) * k;
+    } else {
+      applyCameraInput(rig, drag.dx, drag.dy, drag.zoom, cameraSensitivity, camCfg);
+    }
 
     input.moveX = move.x;
     input.moveY = move.y;
     input.sprint = !blocked && isSprintHeld();
     stepPlayer(playerState, input, rig.yaw, delta, player, colliders, bounds);
 
-    followTarget(rig, playerState.x, camCfg.targetHeight, playerState.z, Math.min(delta, 0.1), camCfg.followSharpness);
+    if (directed) followTarget(rig, cameraDirector.focusX, cameraDirector.focusY + 0.6, cameraDirector.focusZ, Math.min(delta, 0.1), 3);
+    else followTarget(rig, playerState.x, camCfg.targetHeight, playerState.z, Math.min(delta, 0.1), camCfg.followSharpness);
     computeCameraPosition(rig, camCfg.minHeight, camPos);
     state.camera.position.set(camPos.x, camPos.y, camPos.z);
     state.camera.lookAt(rig.targetX, rig.targetY, rig.targetZ);
@@ -73,6 +86,8 @@ export function PlayerRig({ colliders, bounds }: PlayerRigProps) {
     if (group) {
       group.position.set(playerState.x, 0, playerState.z);
       group.rotation.y = playerState.heading;
+      // Selama aktivitas ibadah, pelaku ibadah menggantikan model jalan.
+      group.visible = worshipPerformance.phase === "idle";
     }
   });
 

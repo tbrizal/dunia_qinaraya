@@ -48,7 +48,7 @@ export function LearningPanel() {
         <p className="mb-3 text-xs tabular-nums opacity-70">
           Halaman {learning.page + 1} dari {content.pages.length}
         </p>
-        <p className="mb-5 min-h-[7rem] text-base leading-relaxed">{content.pages[learning.page]}</p>
+        <p className="mb-5 min-h-[7rem] whitespace-pre-line text-base leading-relaxed">{content.pages[learning.page]}</p>
 
         <div className="flex gap-2">
           <button

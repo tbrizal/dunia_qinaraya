@@ -31,7 +31,7 @@ export const PLACES: readonly PlaceDef[] = [
     blurb: "Tempat bersuci di dekat masjid",
     x: -7.5,
     z: -9.6,
-    contentIds: ["wudu-intro"],
+    contentIds: ["wudu-intro", "wudu-rukun", "wudu-pembatal"],
     activityIds: ["wudu-practice"],
     activities: [],
   },
@@ -40,3 +40,9 @@ export const PLACES: readonly PlaceDef[] = [
 export function getPlaceDef(id: string): PlaceDef | undefined {
   return PLACES.find((p) => p.id === id);
 }
+
+/**
+ * Materi umum yang dibuka dari panel jam (kalender dan jadwal), bukan dari lokasi tertentu.
+ * Hanya id; teksnya ada di data/unreviewed dan mengikuti gerbang review.
+ */
+export const GENERAL_CONTENT_IDS: readonly string[] = ["prayer-times", "salat-rakaat", "salat-persiapan", "salat-rukun", "salat-sunah", "ibadah-sumber"];

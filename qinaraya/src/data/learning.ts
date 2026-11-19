@@ -7,7 +7,7 @@ import type { ReviewStatus } from "../systems/content/review.ts";
  * pada build yang mengizinkannya, sehingga teksnya tidak ikut terkirim di build produksi.
  */
 
-export type LearningCategory = "masjid" | "adab" | "wudu" | "waktu-salat";
+export type LearningCategory = "masjid" | "adab" | "wudu" | "waktu-salat" | "salat" | "sumber";
 export type AgeLevel = "early" | "middle" | "family";
 
 export interface LearningContent {

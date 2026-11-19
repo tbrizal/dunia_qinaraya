@@ -85,11 +85,12 @@ export function CharacterModel({ palette = PLAYER_PALETTE, accessory = "none", g
           { ref: armR, x: 0.31 },
         ].map((arm) => (
           <group key={arm.x} ref={arm.ref} position={[arm.x, 1.05, 0]}>
-            <mesh position={[0, -0.2, 0]}>
-              <capsuleGeometry args={[0.07, 0.24, 4, 8]} />
+            {/* Panjang lengan sama dengan kerangka ibadah (worshipRig) agar tidak terlihat berubah proporsi. */}
+            <mesh position={[0, -0.27, 0]}>
+              <capsuleGeometry args={[0.07, 0.4, 4, 8]} />
               <meshStandardMaterial color={palette.tunic} flatShading />
             </mesh>
-            <mesh position={[0, -0.42, 0]}>
+            <mesh position={[0, -0.62, 0]}>
               <sphereGeometry args={[0.085, 10, 8]} />
               <meshStandardMaterial color={palette.skin} flatShading />
             </mesh>

@@ -7,6 +7,9 @@ import { useQuestStore } from "../../stores/useQuestStore";
 import { HIJRI_MONTH_NAMES, findGameMinutesForHijri, formatHijriDate, getHijriDate } from "../../systems/calendar/hijriCalendar";
 import { PRAYER_LABELS, getNextPrayer } from "../../systems/prayer/prayerSchedule";
 import { fromTotalMinutes } from "../../systems/time/gameClock";
+import { CLIPS } from "../../systems/worship/poseLibrary";
+import { beginPerformance, endPerformance, playClip, worshipPerformance } from "../../systems/worship/performance";
+import { WORSHIP_STAGES } from "../../worlds/qinaraya-village/worshipStages";
 import { clockConfig, gameClock } from "../../systems/time/gameClockInstance";
 import { formatClock } from "../../systems/time/timeOfDay";
 
@@ -18,6 +21,7 @@ export default function DevPanel() {
   const [open, setOpen] = useState(false);
   const [month, setMonth] = useState(9);
   const [day, setDay] = useState(1);
+  const [clip, setClip] = useState("salat-sujud");
   const state = useClockStore((s) => s.state);
   const total = useClockStore((s) => s.totalMinutes);
 
@@ -102,6 +106,36 @@ export default function DevPanel() {
             />
             <button type="button" className={btn} style={btnStyle} onClick={jumpToHijri}>
               Lompat
+            </button>
+          </div>
+
+          <p className="mb-1 mt-2 font-semibold">Pratinjau animasi 3D (tanpa panel)</p>
+          <div className="flex flex-wrap items-center gap-1">
+            <select
+              value={clip}
+              onChange={(e) => setClip(e.target.value)}
+              className="min-h-9 max-w-[11rem] rounded-lg px-1"
+              style={{ background: "#2a363a", color: "var(--qin-sand)" }}
+            >
+              {Object.keys(CLIPS).map((id) => (
+                <option key={id} value={id}>
+                  {id}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className={btn}
+              style={btnStyle}
+              onClick={() => {
+                if (worshipPerformance.phase === "idle") beginPerformance(clip.startsWith("wudu") ? WORSHIP_STAGES.wudu : WORSHIP_STAGES.salat);
+                playClip(clip);
+              }}
+            >
+              Putar
+            </button>
+            <button type="button" className={btn} style={btnStyle} onClick={() => endPerformance()}>
+              Selesai
             </button>
           </div>
 

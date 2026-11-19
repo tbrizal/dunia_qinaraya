@@ -48,25 +48,6 @@ export const DRAFT_LEARNING_CONTENT: readonly LearningContent[] = [
     ],
   },
   {
-    id: "wudu-intro",
-    title: "Mengenal Wudu",
-    shortTitle: "Mengenal wudu",
-    category: "wudu",
-    description: "Pengenalan umum tentang wudu sebagai cara bersuci dengan air.",
-    npcId: "ustadz-harun",
-    questId: "learn_wudu",
-    ageLevel: "middle",
-    reviewStatus: "needs-review",
-    reviewNotes:
-      "WAJIB ditinjau ahli. Periksa kalimat tentang anggota wudu secara umum dan catatan perbedaan rincian antar pendapat ulama. Tidak ada urutan langkah rinci dan tidak ada bacaan.",
-    pages: [
-      "Wudu adalah cara bersuci dengan air sebelum melaksanakan salat.",
-      "Secara umum, wudu dilakukan dengan membasuh wajah, membasuh kedua tangan, mengusap kepala, dan membasuh kedua kaki.",
-      "Rincian urutan dan bagian yang dianjurkan bisa sedikit berbeda menurut penjelasan para ulama. Karena itu, belajarlah cara berwudu langsung dari orang tua atau gurumu.",
-      "Gunakan air secukupnya, tidak berlebihan. Di Qinaraya kamu hanya mengenal wudu lewat cerita singkat; ini bukan pengganti belajar langsung.",
-    ],
-  },
-  {
     id: "prayer-times",
     title: "Mengenal Waktu Salat",
     shortTitle: "Mengenal waktu salat",
@@ -78,7 +59,7 @@ export const DRAFT_LEARNING_CONTENT: readonly LearningContent[] = [
     reviewStatus: "needs-review",
     reviewNotes: "WAJIB ditinjau ahli. Periksa penjelasan waktu salat dan penegasan bahwa jadwal game hanyalah simulasi.",
     pages: [
-      "Umat Islam melaksanakan salat lima waktu: Subuh, Dzuhur, Ashar, Magrib, dan Isya.",
+      "Umat Islam melaksanakan salat lima waktu: Subuh, Zuhur, Asar, Magrib, dan Isya.",
       "Di dunia nyata, waktu salat bergantung pada posisi matahari di tempatmu, jadi jadwalnya berbeda di tiap daerah dan tiap hari.",
       "Jam di Qinaraya adalah jadwal simulasi yang dibuat untuk permainan. Untuk waktu salat yang sebenarnya, ikuti jadwal dari masjid atau lembaga di daerahmu.",
       "Di Qinaraya tidak ada hukuman jika kamu sedang sibuk bermain. Pengingat hanya untuk membantumu mengenal waktu.",
