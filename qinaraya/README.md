@@ -21,6 +21,9 @@ npm run dev        # server pengembangan
 npm run typecheck  # pemeriksaan TypeScript
 npm test           # 160+ test: logic, layout, integrasi store, dan isi bundle build (tanpa browser)
 npm run content:review  # membuat docs/CONTENT_REVIEW.md untuk peninjau konten
+npm run guide:import    # mengekstrak panduan wudu dan salat (docs/source) menjadi data game
+npm run poses:solve     # menyelesaikan sudut sendi tiap pose dari target posisi tubuh
+npm run poses:inspect   # mencetak posisi titik tubuh tiap pose (opsional: id pose)
 npm run build      # type-check + build produksi ke dist/
 npm run preview    # menjalankan hasil build secara lokal
 ```
@@ -58,11 +61,22 @@ Nara berada di dekat plaza dan memberi petunjuk tempat-tempat di desa.
 - **Panel jam (kiri atas)** menampilkan jam game, tanggal Hijriah simulasi, dan waktu salat berikutnya. Ketuk untuk melihat kalender dan jadwal lima waktu.
 - **Pengingat lembut** muncul tepat sekali saat waktu salat simulasi tiba. Tidak ada hukuman, skor, atau kewajiban; bisa dimatikan di pengaturan. Bunyi denting (buatan kode, bukan azan) default mati.
 - **Lokasi:** Masjid Qinaraya (utara desa) dan Tempat wudu (di sebelah kiri masjid). Berdiri di depannya lalu tekan E atau ketuk tombol aksi.
-- **Berwudu:** di tempat wudu, kapan saja. Latihan terpandu enam langkah (bersiap, niat, wajah, kedua tangan, kepala, kedua kaki) dengan catatan bahwa rincian bisa berbeda dan perlu mengikuti guru.
-- **Salat:** di masjid, **hanya saat waktu salat sedang berlangsung** (jendelanya diatur di konfigurasi; contoh Dzuhur 12.00 sampai 15.00). Tombolnya berbunyi "Salat Dzuhur" dan di luar waktu tampil redup dengan penjelasan "Belum waktu salat. Berikutnya ...". Panel jam menandai "Waktu Dzuhur sekarang".
+- **Berwudu:** di tempat wudu, kapan saja. Panduan 11 langkah dengan **animasi 3D** tiap langkah: niat, basmalah, telapak tangan, berkumur, hidung, wajah, tangan sampai siku (kanan lalu kiri), kepala, telinga, kaki (kanan lalu kiri), dan doa setelah wudu. Basuhan yang disunahkan tiga kali diulang tiga kali.
+- **Salat:** di masjid. **Saat waktu salat sedang berlangsung** tombolnya berbunyi "Salat Zuhur" (dst.) dan langsung memainkan salat yang sesuai: 2 rakaat (Subuh), 3 (Magrib), atau 4 (Zuhur, Asar, Isya). **Di luar waktu salat** tersedia "Latihan salat": pemain memilih salat yang ingin dipelajari. Jendela waktu diatur di konfigurasi (contoh Zuhur 12.00 sampai 15.00).
+- Setiap langkah menampilkan bacaan **Arab (kanan ke kiri, harakat lengkap)**, transliterasi, arti, penanda **Rukun** atau **Sunah**, indikator rakaat dan posisi ("Rakaat 2 dari 4: Sujud pertama"), dan pengingat tumakninah. Tombol: Sebelumnya, Ulangi (memutar ulang gerakan), Berikutnya; keyboard E atau panah kanan/kiri.
+- Kamera diarahkan otomatis dari samping agar rukuk dan sujud terlihat, dan panel dibuat sebagai lembar bawah supaya karakter tetap tampak di atas. Tikar salat muncul di depan masjid, menghadap qibla (di dunia Qinaraya: utara).
+- Panel jam memuat **Panduan ibadah**: rukun salat, jumlah rakaat lima waktu, persiapan, sunah, dan sumber. Tempat wudu memuat rukun wudu dan hal yang membatalkan wudu.
 - **Ustadz Harun** berdiri di depan masjid dan memberi tiga quest pembelajaran: berkenalan dengan masjid, bersih dan bersuci (termasuk latihan wudu), dan berbagi hasil kebun (butuh quest kebun selesai). Hadiahnya hanya dekorasi.
 
-Aktivitas wudu dan salat **opsional, tanpa skor, tanpa hadiah, tanpa pencatatan "sudah salat", dan tanpa penalti**; bisa ditutup kapan saja. Aktivitas salat sengaja berupa jeda terpandu berbentuk teks dan **bukan simulasi tata cara salat**: tidak ada animasi gerakan wudu atau salat, karena detail gerakan ibadah wajib ditinjau pihak yang kompeten lebih dulu. Hanya latihan wudu yang dihitung sebagai objektif quest belajar; salat tidak pernah menjadi objektif atau progres apa pun.
+Aktivitas wudu dan salat **opsional, tanpa skor, tanpa hadiah, tanpa pencatatan "sudah salat", dan tanpa penalti**; bisa ditutup kapan saja, dan tidak ada pernyataan sah atau tidaknya ibadah pemain. Game selalu menegaskan bahwa materi ini panduan belajar, bukan pengganti bimbingan guru agama. Hanya latihan wudu yang dihitung sebagai objektif quest belajar; salat tidak pernah menjadi objektif atau progres apa pun.
+
+### Panduan sumber dan animasi
+
+- Sumber materi: `docs/source/panduan_wudhu_dan_salat_dunia_qinaraya.md` (dari pemilik proyek). Seluruh kalimat petunjuk, teks Arab, transliterasi, dan arti **diekstrak otomatis** (`npm run guide:import`), tidak diketik ulang. Test membandingkan setiap baris Arab dengan sumber secara persis dan menolak kalimat yang bukan dari panduan (kecuali daftar catatan penghubung yang eksplisit).
+- Ejaan nama salat mengikuti panduan: Subuh, Zuhur, Asar, Magrib, Isya.
+- Animasi memakai kerangka karakter dengan leher, siku, lutut, dan pinggul (`src/components/game/worshipRig.ts`). Pose diselesaikan dari target posisi tubuh dengan kerangka yang sama dengan yang tampil di game (`scripts/solve-poses.ts`), lalu **diuji secara geometris** (`tests/worship-poses.test.ts`): dahi dan hidung di lantai saat sujud, tangan di lutut saat rukuk, kaki kanan tegak saat duduk di antara dua sujud, tidak ada bagian tubuh menembus lantai di tiap frame, dan kecepatan sendi tidak melebihi 3 rad/detik (gerakan tenang, tidak terburu-buru).
+- Perilaku yang disengaja: tidak ada gerakan lucu atau berlebihan, pose tumakninah ditahan minimal 1,2 detik, dan perpindahan klip di tengah gerakan tidak melonjak.
+- Keputusan implementasi yang tidak tegas di panduan (mis. bacaan tasyahud awal, posisi tangan setelah iktidal) didaftar di `docs/CONTENT_REVIEW.md` untuk dikonfirmasi peninjau.
 
 **Kalender dan jadwal adalah simulasi buatan game.** Tidak memakai GPS, lokasi, atau API dunia nyata, dan bukan penetapan tanggal ibadah.
 Konfigurasi ada di `src/config/lifestyleConfig.ts`: tanggal awal, jumlah hari per bulan, kecepatan kalender, serta jam dan lama jendela (`windowMinutes`) tiap waktu salat. Jendela tidak boleh melewati waktu salat berikutnya (divalidasi oleh `validateSchedule`).
@@ -99,6 +113,7 @@ src/
 ├── systems/                # Logic murni tanpa DOM/Three.js (dites di Node)
 │   ├── time/               # GameClock, siang-malam, waktu hari
 │   ├── calendar/  prayer/  content/  audio/   # Hijriah simulasi, jadwal salat, gerbang review, denting
+│   ├── worship/            # Urutan wudu dan salat, pose, klip animasi, pertunjukan 3D
 │   ├── inventory/  farming/  quest/  dialogue/  interaction/
 │   ├── movement/  camera/  input/  player/
 │   └── save/               # Format save, validasi, migrasi versi
@@ -106,7 +121,9 @@ src/
     ├── villageLayout.ts    # Data tata letak + collider (sumber tunggal)
     ├── interactables.ts    # Petak dan NPC yang bisa diinteraksi
     └── *.tsx               # Ground, Buildings, Vegetation, FarmPlots, Npcs, TargetMarker, DayNightLighting
-tests/                      # node --test: logic, layout, dan integrasi store
+docs/source/                # Panduan wudu dan salat (sumber materi ibadah)
+scripts/                    # Alat: ekstraksi panduan, penyelesai pose, dokumen peninjau
+tests/                      # node --test: logic, layout, geometri pose, dan integrasi store
 ```
 
 Prinsip: `systems/` tidak mengimpor React atau Three.js. Aturan game ada di `systems/`,
@@ -181,7 +198,12 @@ Unit test memverifikasi logic, tetapi rasa kontrol dan tampilan harus diuji di p
 - [ ] Pengingat salat muncul sekali, tidak berulang, dan hilang sendiri. Uji dengan tombol "Maju ke ... - 1 menit".
 - [ ] Mematikan pengingat di pengaturan benar-benar menghentikannya; bunyi denting hanya bila dinyalakan.
 - [ ] Masjid dan tempat wudu: prompt muncul saat berdiri di depannya; Ustadz Harun mudah dijangkau.
-- [ ] Berwudu bisa dibuka kapan saja dan ditutup di tengah jalan; Salat hanya aktif di dalam jendela waktu salat, dan redup dengan penjelasan di luar itu.
+- [ ] Berwudu: 11 langkah, tiap langkah menampilkan gerakan yang sesuai; Ulangi memutar ulang gerakan; bisa ditutup di tengah jalan.
+- [ ] Salat di dalam jendela waktu langsung memainkan salat yang sesuai; di luar jendela muncul "Latihan salat" dengan pilihan lima salat.
+- [ ] Gerakan salat terlihat jelas dari kamera samping: takbir, sedekap, rukuk (punggung rata, tangan di lutut), iktidal, sujud (dahi di lantai, tangan di samping kepala), duduk di antara dua sujud, tasyahud, dan salam kanan-kiri.
+- [ ] Tidak ada bagian tubuh yang tampak menembus lantai atau saling menembus, dan gerakan terasa tenang.
+- [ ] Teks Arab terbaca (kanan ke kiri, harakat jelas) di layar kecil dan font Arab termuat saat panel pertama dibuka.
+- [ ] Panel panduan tidak menutupi karakter; sesuaikan `focusY`, `distance`, dan `pitch` di `worshipStages.ts` bila perlu.
 - [ ] Pengingat salat di build uji menyertakan saran "berwudu dan salat di masjid, atau lanjut bermain"; tidak ada yang berubah bila diabaikan.
 - [ ] Materi terbaca per halaman (tombol Kembali, Lanjut, Selesai) dan terbaca baik di layar kecil.
 - [ ] Tiga quest berjalan sampai selesai dan hadiah dekorasi masuk tas.
@@ -194,7 +216,11 @@ Unit test memverifikasi logic, tetapi rasa kontrol dan tampilan harus diuji di p
 - Semua model dan ikon adalah placeholder (bentuk dasar dan emoji). Aset final menyusul pada fase aset.
 - Kamera belum menghindari dinding, dan belum ada bayangan dinamis.
 - Belum ada pembuatan karakter, hewan ternak, memasak, jual-beli, dan Qina Coin.
-- **Tidak ada animasi gerakan wudu atau salat di 3D.** Aktivitasnya hanya terpandu lewat teks. Animasi baru boleh dibuat bila peninjau memberi dan menyetujui urutan gerakannya.
+- **Animasi ibadah belum pernah dilihat di render nyata oleh pengembang.** Bentuk pose dijamin secara geometris oleh test, tetapi keindahan dan kenaturalannya (terutama membasuh kaki, tawarruk, dan peralihan berdiri ke sujud) perlu dinilai dan disetel secara visual. Pratinjau per klip tersedia di panel DEV.
+- Tawarruk digambarkan sederhana: kerangka belum punya gerak menyamping pada pinggul, sehingga kaki kiri terselip ke belakang di bawah paha, bukan melintas di bawah betis kanan. Posisi jari telunjuk saat tasyahud tidak digambarkan.
+- Teks Arab Al-Fatihah dan surah pendek tidak ada di panduan sumber, sehingga tidak ditampilkan (pemain diarahkan ke mushaf atau guru). Qunut Subuh juga tidak dimasukkan.
+- Satu salat empat rakaat terdiri dari 37 langkah; belum ada mode putar otomatis.
+- Karakter beraktivitas dengan palet pemain; belum ada pilihan karakter.
 - **Belum ada peninjau konten.** Seluruh materi agama masih draf. Hingga ditinjau, build produksi tidak memuatnya.
 - Event Islami (Ramadan, Idulfitri, Iduladha, dan lain-lain) belum ada; itu Phase 4. Bila `calendarDaysPerGameDay` lebih dari 1, pencocokan event pada hari tertentu perlu memperhitungkan hari kalender yang terlewati.
 - Kalender memakai 30 hari per bulan agar sederhana; bulan Hijriah sebenarnya 29 atau 30 hari.

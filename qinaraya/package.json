@@ -9,9 +9,13 @@
     "typecheck": "tsc -b --noEmit",
     "preview": "vite preview",
     "test": "node --test \"tests/**/*.test.ts\"",
-    "content:review": "node scripts/export-review.ts"
+    "content:review": "node scripts/export-review.ts",
+    "guide:import": "node scripts/import-ibadah-guide.ts",
+    "poses:solve": "node scripts/solve-poses.ts",
+    "poses:inspect": "node scripts/inspect-poses.ts"
   },
   "dependencies": {
+    "@fontsource/noto-naskh-arabic": "^5.3.0",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.2",
     "react": "^19.3.1",

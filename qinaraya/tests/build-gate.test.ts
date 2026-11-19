@@ -10,7 +10,18 @@ import { build } from "vite";
  * ditinjau benar-benar tidak terkirim ke pemain pada build produksi, bukan sekadar disembunyikan di UI.
  */
 
-const DRAFT_SENTINELS = ["Wudu adalah cara bersuci", "Berkenalan dengan Masjid", "Umat Islam melaksanakan salat lima waktu", "Berbagi Hasil Kebun", "Latihan Berwudu", "Salat dilakukan di dunia nyata", "Kamu bisa berwudu dan salat di masjid"];
+const guideSource = readFileSync(new URL("../docs/source/panduan_wudhu_dan_salat_dunia_qinaraya.md", import.meta.url), "utf8").replace(/\r/g, "").split("\n");
+const firstArabic = guideSource[guideSource.findIndex((l) => l.trim() === "**Arab:**") + 1]!.trim();
+const DRAFT_SENTINELS = [
+  firstArabic, // teks Arab pertama dari panduan (niat wudu)
+  "Tumakninah berarti", // kalimat panduan
+  "Rukun Wudu",
+  "Berkenalan dengan Masjid",
+  "Umat Islam melaksanakan salat lima waktu",
+  "Berbagi Hasil Kebun",
+  "Kamu bisa berwudu dan salat di masjid",
+  "Teks Al-Fatihah tidak disertakan di panduan sumber",
+];
 const DEV_SENTINEL = "Panel debug (hanya development)";
 
 async function buildAndRead(env: Record<string, string | undefined>): Promise<string> {
@@ -51,6 +62,6 @@ test("deploy Production di Vercel menolak saklar konten belum ditinjau", async (
 
 test("build uji (staging/preview) dengan saklar menyala memuat konten draf", async () => {
   const js = await buildAndRead({ VITE_SHOW_UNREVIEWED_CONTENT: "true", VERCEL_ENV: "preview" });
-  assert.ok(js.includes(DRAFT_SENTINELS[0]!), "build uji seharusnya memuat materi draf");
+  assert.ok(js.includes(DRAFT_SENTINELS[0]!) && js.includes(DRAFT_SENTINELS[1]!), "build uji seharusnya memuat panduan dan materi draf");
   assert.ok(!js.includes(DEV_SENTINEL), "panel debug tetap tidak ada di build non-development");
 });

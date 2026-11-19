@@ -5,6 +5,9 @@ import { LEARNING_CONTENT } from "../src/data/learning.ts";
 import { PLACES } from "../src/data/places.ts";
 import { QUEST_LIST } from "../src/data/quests.ts";
 import { registerUnreviewedContent } from "../src/data/unreviewed/index.ts";
+import { GUIDE_SOURCE_SHA256 } from "../src/data/unreviewed/ibadahGuide.generated.ts";
+import { getWorshipGuide } from "../src/data/worship.ts";
+import { buildSalatSteps, buildWuduSteps } from "../src/systems/worship/sequences.ts";
 import { reviewLabel } from "../src/systems/content/review.ts";
 
 /**
@@ -58,22 +61,53 @@ for (const c of LEARNING_CONTENT) {
   out();
 }
 
-out("## Aktivitas terpandu (wudu dan salat)");
+out("## Panduan wudu dan salat (sumber dari pemilik proyek)");
 out();
-out("Berkas: `src/data/unreviewed/activities.ts`. Aktivitas ini sengaja hanya berupa teks langkah demi langkah:");
-out("**tidak ada animasi gerakan wudu atau salat**, tidak ada skor, hadiah, atau pencatatan, dan tidak ada penalti bila tidak dilakukan.");
-out("Peninjau juga diminta memutuskan apakah animasi gerakan boleh dibuat, dan bila ya, memberikan urutan yang disetujui.");
+out("Sumber: `docs/source/panduan_wudhu_dan_salat_dunia_qinaraya.md` (SHA-256 " + GUIDE_SOURCE_SHA256.slice(0, 12) + "...).");
+out("Seluruh kalimat petunjuk, bacaan Arab, transliterasi, dan arti diekstrak otomatis (`npm run guide:import`), tidak diketik ulang.");
+out("Test membandingkan setiap baris Arab dengan sumber secara persis. Teks tambahan dari pengembang dibatasi pada judul, label, dan catatan penghubung yang daftarnya ada di `tests/worship-guide.test.ts`.");
+out();
+out("Berkas data: `src/data/unreviewed/ibadahGuide.ts` (pemetaan), `ibadahGuide.generated.ts` (hasil ekstraksi), `ibadahLearning.ts` (materi baca).");
+out();
+const guide = getWorshipGuide()!;
+out("### Langkah wudu dalam game");
+out();
+buildWuduSteps(guide).forEach((st, i) => out(`${i + 1}. ${st.title} (${st.kind}) - animasi \`${st.clip}\``));
+out();
+out("### Urutan salat dalam game");
+out();
+for (const p of guide.prayers) {
+  const steps = buildSalatSteps(p.prayer, guide);
+  out(`- ${p.name}: ${p.rakaat} rakaat, ${steps.length} langkah`);
+}
+out();
+out("### Keputusan implementasi yang perlu dikonfirmasi peninjau");
+out();
+out("Hal-hal berikut tidak disebut tegas di panduan sumber, sehingga implementasinya mengambil bentuk paling sederhana atau netral:");
+out();
+out("1. **Label sunah untuk 'membasuh telapak tangan'.** Panduan tidak memasukkannya ke enam rukun, tetapi juga tidak menyebutnya sunah. Ditampilkan sebagai sunah.");
+out("2. **Label sunah untuk taawuz.** Tidak termasuk rukun salat; panduan tidak menyebutnya sunah secara eksplisit.");
+out("3. **Bacaan tasyahud awal.** Panduan hanya merinci bacaan tasyahud pada tasyahud akhir. Pada tasyahud awal ditampilkan tasyahud tanpa selawat, disertai catatan bahwa panduan tidak merincinya.");
+out("4. **Posisi duduk tasyahud awal.** Panduan tidak menyebutnya. Digambarkan iftirasy (seperti duduk di antara dua sujud).");
+out("5. **Posisi tangan setelah iktidal.** Panduan tidak menyebutnya. Digambarkan diturunkan di sisi tubuh.");
+out("6. **Salam kedua** diberi label netral (bukan rukun, bukan sunah), karena panduan hanya menyebut salam pertama sebagai rukun.");
+out("7. **Niat salat selain Subuh.** Panduan hanya memberi lafal contoh untuk Subuh. Salat lain tidak diberi lafal; ditampilkan catatan bahwa niat di dalam hati yang wajib.");
+out("8. **Al-Fatihah dan surah pendek.** Teks Arabnya tidak ada di panduan, jadi tidak ditampilkan; pemain diarahkan ke mushaf atau guru.");
+out("9. **Qunut Subuh** tidak dimasukkan karena tidak ada di panduan.");
+out("10. **Jari telunjuk saat tasyahud, posisi telapak tangan, dan arah pandangan.** Tidak dirinci panduan; animasi tidak menggambarkannya secara spesifik.");
+out("11. **Tawarruk.** Karena kerangka karakter belum punya gerak menyamping pada pinggul, kaki kiri digambarkan terselip ke belakang di bawah paha, bukan melintas di bawah betis kanan.");
+out("12. **Qibla.** Di dunia Qinaraya qibla ditetapkan ke arah utara sesuai desain masjid (pintu menghadap selatan). Ini pengaturan dunia fiktif.");
+out("13. **Jumlah basuhan.** Animasi mengulang tiga kali sesuai yang disunahkan di panduan; satu kali basuhan merata sudah memenuhi rukun.");
+out();
+out("### Aktivitas dalam game");
 out();
 for (const a of ACTIVITIES) {
-  out(`### ${a.title} (\`${a.id}\`)`);
+  out(`#### ${a.title} (\`${a.id}\`)`);
   out();
   out(`- Status saat ini: **${reviewLabel(a.reviewStatus)}** (\`${a.reviewStatus}\`)`);
-  out(`- Lokasi: ${a.placeId}, ketersediaan: ${a.availability === "prayer-window" ? "hanya saat waktu salat sedang berlangsung" : "kapan saja"}`);
+  out(`- Lokasi: ${a.placeId}, ketersediaan: ${a.availability === "prayer-window" ? "salat sesungguhnya hanya saat waktu salat berlangsung; di luar itu tersedia sebagai latihan" : "kapan saja"}`);
   out(`- Catatan untuk peninjau: ${a.reviewNotes}`);
-  out();
-  a.steps.forEach((step, i) => out(`${i + 1}. **${step.title}**: ${step.text}`));
-  out();
-  out(`- Penutup: ${a.closing}`);
+  out(`- Penutup (tambahan pengembang): ${a.closing}`);
   if (a.reminderHint) out(`- Kalimat pada pengingat waktu salat: ${a.reminderHint}`);
   out();
   out("- [ ] Disetujui  [ ] Perlu revisi  | Peninjau: ____________  Tanggal: ____________");

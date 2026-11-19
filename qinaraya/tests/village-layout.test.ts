@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { gameConfig } from "../src/config/gameConfig.ts";
 import { NPCS } from "../src/data/npcs.ts";
 import { PLACES } from "../src/data/places.ts";
+import { QIBLA_HEADING, WORSHIP_STAGES } from "../src/worlds/qinaraya-village/worshipStages.ts";
 import { resolveCollisions } from "../src/systems/movement/collision.ts";
 import { createPlayerState, stepPlayer } from "../src/systems/movement/stepPlayer.ts";
 import { villageLayout } from "../src/worlds/qinaraya-village/villageLayout.ts";
@@ -145,4 +146,45 @@ test("Ustadz Harun berdiri dekat pintu masjid dan titik masjid tidak tertutup ol
   const masjid = PLACES.find((p) => p.id === "masjid")!;
   assert.ok(Math.hypot(ustadz.x - masjid.x, ustadz.z - masjid.z) < 4);
   assert.ok(Math.hypot(ustadz.x - masjid.x, ustadz.z - masjid.z) > 1.2, "NPC tidak boleh menutup titik berdiri masjid");
+});
+
+test("tempat aktivitas ibadah bebas collider dan dekat titik lokasinya", () => {
+  const near = (stageId: "wudu" | "salat", placeId: string) => {
+    const stage = WORSHIP_STAGES[stageId];
+    const place = PLACES.find((p) => p.id === placeId)!;
+    assert.ok(Math.hypot(stage.x - place.x, stage.z - place.z) <= gameConfig.interaction.poiRange, `${stageId}: terlalu jauh dari titik lokasi`);
+    assert.equal(resolveCollisions({ x: stage.x, z: stage.z }, player.radius, colliders, bounds), false, `${stageId}: titik berdiri terhalang`);
+  };
+  near("wudu", "wudu");
+  near("salat", "masjid");
+});
+
+test("ruang gerak salat: area sujud ke arah qibla, dan di sisi kamera, bebas dari bangunan dan pohon", () => {
+  const s = WORSHIP_STAGES.salat;
+  assert.equal(s.heading, QIBLA_HEADING);
+  // Qibla utara (-Z): sujud memanjang ke utara sekitar 0,8 m, dan tikar selebar 1 m.
+  for (let dz = -1.0; dz <= 0.6; dz += 0.2) {
+    for (const dx of [-0.6, 0, 0.6]) {
+      assert.equal(resolveCollisions({ x: s.x + dx, z: s.z + dz }, 0.25, colliders, bounds), false, `terhalang di (${(s.x + dx).toFixed(1)}, ${(s.z + dz).toFixed(1)})`);
+    }
+  }
+});
+
+test("pelaku wudu menghadap bak wudu dengan jarak lega; pelaku menghadap utara ke arah bak", () => {
+  const stage = WORSHIP_STAGES.wudu;
+  const bak = buildings.find((b) => b.id === "wudu")!;
+  assert.equal(stage.heading, Math.PI, "menghadap utara (-Z), ke arah bak");
+  const gap = stage.z - (bak.z + bak.depth / 2);
+  assert.ok(gap > 0.3 && gap < 0.9, `jarak ke tepi bak ${gap.toFixed(2)} m`);
+  assert.ok(Math.abs(stage.x - bak.x) < 0.5, "berdiri tepat di depan bak");
+});
+
+test("kamera adegan ibadah: sudut samping agar rukuk dan sujud terlihat, jarak dan sudut wajar", () => {
+  for (const stage of Object.values(WORSHIP_STAGES)) {
+    assert.ok(stage.camera.distance >= 3.5 && stage.camera.distance <= 7, stage.id);
+    assert.ok(stage.camera.pitch > 0.1 && stage.camera.pitch < 0.6, stage.id);
+    assert.ok(stage.camera.focusY < 0, "titik pandang di bawah karakter agar karakter tampil di atas panel");
+  }
+  const yaw = WORSHIP_STAGES.salat.camera.yaw;
+  assert.ok(Math.abs(Math.sin(yaw)) > 0.9, "kamera di sisi timur atau barat, melihat karakter dari samping");
 });

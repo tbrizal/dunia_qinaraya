@@ -40,6 +40,12 @@ async function load(server: ViteDevServer) {
     learningData: await l("/src/data/learning.ts"),
     activityActions: await l("/src/stores/activityActions.ts"),
     activities: await l("/src/data/activities.ts"),
+    perf: await l("/src/systems/worship/performance.ts"),
+    worship: await l("/src/data/worship.ts"),
+    player: await l("/src/systems/player/playerState.ts"),
+    poses: await l("/src/systems/worship/poseLibrary.ts"),
+    director: await l("/src/systems/camera/cameraDirector.ts"),
+    stages: await l("/src/worlds/qinaraya-village/worshipStages.ts"),
     tracker: await l("/src/systems/quest/questTracker.ts"),
     unreviewed: await l("/src/data/unreviewed/index.ts"),
   };
@@ -84,6 +90,9 @@ function practiceWudu(m: Record<string, Mod>) {
   assert.equal(m.ui.isModalOpen(), true, "aktivitas menjeda dunia");
   for (let guard = 0; guard < 20 && m.ui.useUiStore.getState().activity; guard++) m.activityActions.activityNext();
   assert.equal(m.ui.useUiStore.getState().activity, null);
+  assert.equal(m.ui.isModalOpen(), true, "input tetap terkunci sampai pelaku selesai kembali berdiri");
+  m.perf.finishPerformance(); // pelaku selesai kembali berdiri
+  assert.equal(m.ui.isModalOpen(), false);
 }
 
 function setTime(m: Record<string, Mod>, hour: number, minute: number) {
@@ -230,7 +239,7 @@ test("pengingat salat: tepat sekali per waktu, bukan tiap frame, dan menghormati
   d.clock.gameClock.setState({ day: 1, month: 1, year: 1, hour: 11, minute: 59, speedMultiplier: 1, isPaused: false }, 0);
   for (let i = 0; i < 5 * 60; i++) d.clock.gameClock.tick(1 / 60);
   assert.equal(notices.length, 1);
-  assert.match(notices[0]!, /Dzuhur/);
+  assert.match(notices[0]!, /Zuhur/);
 
   // Lompatan debug melewati Ashar: tidak ada pengingat.
   d.clock.gameClock.advanceMinutes(400);
@@ -344,104 +353,215 @@ test("produksi: aktivitas wudu dan salat tidak bisa dibuka dan pengingat tanpa s
   assert.equal(toast(p), "Aktivitas ini belum tersedia");
   p.activityActions.openActivity("salat-moment");
   assert.equal(p.ui.useUiStore.getState().activity, null);
+  assert.equal(p.perf.worshipPerformance.phase, "idle", "tidak ada pertunjukan 3D di produksi");
+  assert.equal(p.director.cameraDirector.active, false);
   assert.equal(p.activities.getVisibleActivity("salat-moment"), undefined);
   assert.equal(p.activities.getVisibleActivity("salat-moment", true)?.reminderHint, "Kamu bisa berwudu dan salat di masjid, atau lanjut bermain.");
 });
 
-// ---------- Wudu dan salat (build uji) ----------
+// ---------- Wudu dan salat 3D (build uji) ----------
 
-test("wudu: bisa dilatih kapan saja, termasuk di luar waktu salat, tanpa mengubah milik pemain", () => {
-  d.persistence.startNewGame();
-  const before = JSON.stringify([d.inv.useInventoryStore.getState().inventory, d.learning.useLearningStore.getState().learned]);
-  for (const [h, m] of [[3, 0], [10, 0], [12, 30]] as const) {
-    setTime(d, h, m);
-    practiceWudu(d);
-  }
-  assert.equal(toast(d), "Latihan wudu selesai");
-  assert.equal(JSON.stringify([d.inv.useInventoryStore.getState().inventory, d.learning.useLearningStore.getState().learned]), before, "tidak ada hadiah atau catatan");
+const snapshot = (m: Record<string, Mod>) =>
+  JSON.stringify([m.inv.useInventoryStore.getState().inventory, m.quest.useQuestStore.getState().quests, m.learning.useLearningStore.getState().learned, m.farm.useFarmStore.getState().plots]);
+
+/** Menekan Berikutnya sampai aktivitas selesai. */
+function finishActivityByNext(m: Record<string, Mod>) {
+  for (let guard = 0; guard < 60 && m.ui.useUiStore.getState().activity; guard++) m.activityActions.activityNext();
+  assert.equal(m.ui.useUiStore.getState().activity, null);
+}
+
+test("panduan terdaftar pada build uji: 11 langkah wudu dan rakaat tiap salat sesuai panduan", () => {
+  const guide = d.worship.getWorshipGuide();
+  assert.ok(guide);
+  assert.equal(guide.wuduSteps.length, 11);
+  assert.deepEqual(guide.prayers.map((x: Mod) => x.rakaat), [2, 4, 4, 3, 4]);
 });
 
-test("wudu bisa ditutup di tengah jalan kapan saja tanpa konsekuensi dan tanpa progres quest", () => {
+test("wudu: 11 langkah, pertunjukan 3D berjalan dengan klip tiap langkah, dan tidak mengubah milik pemain", () => {
+  d.persistence.startNewGame();
+  const before = snapshot(d);
+  for (const [h, m] of [[3, 0], [10, 0], [12, 30]] as const) {
+    setTime(d, h, m);
+    target(d, "poi", "wudu");
+    d.actions.runAction("activity:wudu-practice");
+    const a = d.ui.useUiStore.getState().activity;
+    assert.equal(a.kind, "wudu");
+    assert.equal(a.steps.length, 11);
+    assert.equal(a.stage, "play");
+    assert.equal(d.perf.worshipPerformance.phase, "active");
+    assert.equal(d.perf.worshipPerformance.stage.id, "wudu");
+    assert.equal(d.perf.worshipPerformance.clip, a.steps[0].clip);
+    assert.equal(d.director.cameraDirector.active, true, "kamera diarahkan ke adegan");
+    assert.equal(d.ui.isModalOpen(), true);
+
+    for (let i = 1; i <= 11; i++) {
+      d.activityActions.activityNext();
+      const now = d.ui.useUiStore.getState().activity;
+      assert.equal(now.index, i);
+      assert.equal(d.perf.worshipPerformance.clip, i < 11 ? now.steps[i].clip : "return-stand");
+    }
+    d.activityActions.activityNext(); // dari halaman penutup berarti selesai
+    assert.equal(d.ui.useUiStore.getState().activity, null);
+    assert.equal(d.perf.worshipPerformance.phase, "returning");
+    d.perf.finishPerformance();
+  }
+  assert.equal(toast(d), "Latihan wudu selesai");
+  assert.equal(snapshot(d), before, "tanpa hadiah, skor, atau catatan");
+});
+
+test("setelah aktivitas, pemain muncul di tempat aktivitas menghadap arah yang benar dan kamera dilepas", () => {
+  d.persistence.startNewGame();
+  setTime(d, 12, 30);
+  target(d, "poi", "masjid");
+  d.actions.runAction("activity:salat-moment");
+  assert.equal(d.perf.worshipPerformance.stage.id, "salat");
+  finishActivityByNext(d);
+  d.perf.finishPerformance();
+  const salat = d.stages.WORSHIP_STAGES.salat;
+  assert.equal(d.perf.worshipPerformance.phase, "idle");
+  assert.equal(d.player.playerState.x, salat.x);
+  assert.equal(d.player.playerState.z, salat.z);
+  assert.equal(d.player.playerState.heading, d.stages.QIBLA_HEADING);
+  assert.equal(d.director.cameraDirector.active, false);
+  assert.equal(d.stages.QIBLA_HEADING, Math.PI, "qibla dunia Qinaraya: utara (-Z)");
+});
+
+test("wudu ditutup di tengah jalan kapan saja tanpa konsekuensi dan tanpa progres quest", () => {
   d.persistence.startNewGame();
   d.quest.useQuestStore.getState().setQuests({ learn_wudu: { status: "active", objectives: [1, 0, 0, 0] } });
   target(d, "poi", "wudu");
   d.actions.runAction("activity:wudu-practice");
   d.activityActions.activityNext();
   d.activityActions.activityNext();
-  assert.equal(d.ui.useUiStore.getState().activity.step, 2);
+  assert.equal(d.ui.useUiStore.getState().activity.index, 2);
   d.activityActions.activityPrev();
-  assert.equal(d.ui.useUiStore.getState().activity.step, 1);
+  assert.equal(d.ui.useUiStore.getState().activity.index, 1);
+  assert.equal(d.perf.worshipPerformance.clip, d.ui.useUiStore.getState().activity.steps[1].clip);
   d.activityActions.closeActivity();
   assert.equal(d.ui.useUiStore.getState().activity, null);
+  assert.equal(d.perf.worshipPerformance.phase, "returning");
   assert.deepEqual(d.quest.useQuestStore.getState().quests.learn_wudu.objectives, [1, 0, 0, 0], "belum selesai, belum dihitung");
+  d.perf.finishPerformance();
 });
 
-test("salat: di luar waktu salat ditolak dengan penjelasan yang sopan", () => {
+test("ulangi gerakan: pose dimundurkan ke akhir langkah sebelumnya lalu klip langkah ini diputar", () => {
+  d.persistence.startNewGame();
+  target(d, "poi", "wudu");
+  d.actions.runAction("activity:wudu-practice");
+  const steps = d.ui.useUiStore.getState().activity.steps;
+
+  d.activityActions.activityReplay();
+  assert.equal(d.perf.worshipPerformance.clip, `pose:stand|${steps[0].clip}`);
+  assert.equal(d.ui.useUiStore.getState().activity.replay, 1);
+
+  d.activityActions.activityNext();
+  d.activityActions.activityReplay();
+  assert.equal(d.perf.worshipPerformance.clip, `pose:${d.poses.lastPoseOf(steps[0].clip)}|${steps[1].clip}`);
+  d.activityActions.closeActivity();
+  d.perf.finishPerformance();
+});
+
+test("salat di luar waktu: Latihan salat membuka pemilih, dan tiap salat memberi jumlah langkah yang benar", () => {
   d.persistence.startNewGame();
   setTime(d, 10, 0);
   target(d, "poi", "masjid");
+  const label = d.actions.computeTargetView(d.inter.useInteractionStore.getState().target).actions.find((a: Mod) => a.id === "activity:salat-moment");
+  assert.equal(label.label, "Latihan salat");
+  assert.equal(label.enabled, true);
+
   d.actions.runAction("activity:salat-moment");
-  assert.equal(d.ui.useUiStore.getState().activity, null);
-  assert.equal(toast(d), "Belum waktu salat. Berikutnya Dzuhur 12.00");
+  let a = d.ui.useUiStore.getState().activity;
+  assert.equal(a.stage, "choose");
+  assert.equal(a.practice, true);
+  assert.deepEqual(a.steps, []);
+  d.activityActions.activityNext(); // belum memilih: tidak ada efek
+  assert.equal(d.ui.useUiStore.getState().activity.stage, "choose");
+
+  const expected = { subuh: 22, dzuhur: 37, ashar: 37, maghrib: 30, isya: 37 } as const;
+  for (const [prayer, count] of Object.entries(expected)) {
+    d.activityActions.closeActivity();
+    d.perf.finishPerformance();
+    d.actions.runAction("activity:salat-moment");
+    d.activityActions.choosePrayer(prayer);
+    a = d.ui.useUiStore.getState().activity;
+    assert.equal(a.stage, "play", prayer);
+    assert.equal(a.practice, true);
+    assert.equal(a.steps.length, count, prayer);
+    assert.equal(a.prayer, prayer);
+    assert.equal(d.perf.worshipPerformance.clip, "salat-niat");
+  }
+  assert.equal(d.ui.useUiStore.getState().activity.prayerLabel, "Isya");
+  d.activityActions.closeActivity();
+  d.perf.finishPerformance();
 });
 
-test("salat: saat waktu Dzuhur berlangsung aktivitas terbuka, memakai nama waktunya, dan selesai tanpa mencatat apa pun", () => {
+test("salat saat waktu Zuhur berlangsung: langsung berjalan, memakai nama waktunya, dan selesai tanpa mencatat apa pun", () => {
   d.persistence.startNewGame();
   setTime(d, 12, 30);
   d.inv.useInventoryStore.getState().add("hoe", 1);
-  const before = JSON.stringify([
-    d.inv.useInventoryStore.getState().inventory,
-    d.quest.useQuestStore.getState().quests,
-    d.learning.useLearningStore.getState().learned,
-    d.farm.useFarmStore.getState().plots,
-  ]);
+  const before = snapshot(d);
   const minutesBefore = d.clock.gameClock.getTotalMinutes();
 
   target(d, "poi", "masjid");
   const view = d.actions.computeTargetView(d.inter.useInteractionStore.getState().target);
-  assert.equal(view.actions.find((a: Mod) => a.id === "activity:salat-moment").label, "Salat Dzuhur");
+  assert.equal(view.actions.find((a: Mod) => a.id === "activity:salat-moment").label, "Salat Zuhur");
 
   d.actions.runAction("activity:salat-moment");
   const open = d.ui.useUiStore.getState().activity;
-  assert.equal(open.activityId, "salat-moment");
-  assert.equal(open.prayerLabel, "Dzuhur");
+  assert.equal(open.stage, "play");
+  assert.equal(open.practice, false);
+  assert.equal(open.prayer, "dzuhur");
+  assert.equal(open.prayerLabel, "Zuhur");
+  assert.equal(open.steps.length, 37, "salat empat rakaat");
+  assert.equal(open.steps[0].indicator.totalRakaat, 4);
   assert.equal(d.ui.isModalOpen(), true);
   d.clock.gameClock.setPaused(true);
   assert.equal(d.clock.gameClock.tick(5), 0, "waktu dunia berhenti selama aktivitas");
   d.clock.gameClock.setPaused(false);
 
-  for (let guard = 0; guard < 20 && d.ui.useUiStore.getState().activity; guard++) d.activityActions.activityNext();
-  assert.equal(d.ui.useUiStore.getState().activity, null);
+  finishActivityByNext(d);
   assert.equal(toast(d), "Terima kasih sudah berhenti sejenak");
-
-  const after = JSON.stringify([
-    d.inv.useInventoryStore.getState().inventory,
-    d.quest.useQuestStore.getState().quests,
-    d.learning.useLearningStore.getState().learned,
-    d.farm.useFarmStore.getState().plots,
-  ]);
-  assert.equal(after, before, "tidak ada hadiah, skor, catatan, atau perubahan apa pun");
+  d.perf.finishPerformance();
+  assert.equal(snapshot(d), before, "tidak ada hadiah, skor, catatan, atau perubahan apa pun");
   assert.equal(d.clock.gameClock.getTotalMinutes(), minutesBefore, "tidak memakan waktu game");
 });
 
-test("salat: dapat ditutup kapan saja, dan jendela berakhir tepat sesuai konfigurasi", () => {
+test("salat: jendela berakhir tepat sesuai konfigurasi; sesudahnya tersedia sebagai latihan", () => {
   d.persistence.startNewGame();
   target(d, "poi", "masjid");
 
   setTime(d, 14, 59);
   d.actions.runAction("activity:salat-moment");
-  assert.ok(d.ui.useUiStore.getState().activity, "menit terakhir jendela Dzuhur masih bisa");
+  assert.equal(d.ui.useUiStore.getState().activity.practice, false, "menit terakhir jendela Zuhur masih waktu salat");
   d.activityActions.closeActivity();
-  assert.equal(d.ui.useUiStore.getState().activity, null);
+  d.perf.finishPerformance();
 
   setTime(d, 15, 0);
   d.actions.runAction("activity:salat-moment");
-  assert.equal(d.ui.useUiStore.getState().activity, null, "jendela Dzuhur sudah berakhir");
+  assert.equal(d.ui.useUiStore.getState().activity.stage, "choose", "jendela Zuhur berakhir: berlatih");
+  d.activityActions.closeActivity();
+  d.perf.finishPerformance();
 
   setTime(d, 15, 30);
   d.actions.runAction("activity:salat-moment");
-  assert.equal(d.ui.useUiStore.getState().activity.prayerLabel, "Ashar");
+  assert.equal(d.ui.useUiStore.getState().activity.prayerLabel, "Asar");
+  assert.equal(d.ui.useUiStore.getState().activity.practice, false);
   d.activityActions.closeActivity();
+  d.perf.finishPerformance();
+});
+
+test("salat tiga rakaat (Magrib) saat waktunya: tiga rakaat dengan tasyahud awal dan akhir", () => {
+  d.persistence.startNewGame();
+  setTime(d, 18, 30);
+  target(d, "poi", "masjid");
+  d.actions.runAction("activity:salat-moment");
+  const a = d.ui.useUiStore.getState().activity;
+  assert.equal(a.prayerLabel, "Magrib");
+  assert.equal(a.steps.length, 30);
+  assert.equal(a.steps.filter((x: Mod) => x.id.endsWith("tasyahud-awal")).length, 1);
+  assert.equal(a.steps.filter((x: Mod) => x.id.endsWith("tasyahud-akhir")).length, 1);
+  d.activityActions.closeActivity();
+  d.perf.finishPerformance();
 });
 
 test("pengingat salat di build uji menyertakan saran aktivitas; sesudah tombol tutup tidak ada yang tercatat", () => {

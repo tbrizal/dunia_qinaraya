@@ -7,7 +7,7 @@ import { ITEMS } from "../src/data/items.ts";
 import { LEARNING_CONTENT, getLearningContent, getVisibleLearningContent } from "../src/data/learning.ts";
 import { NPCS } from "../src/data/npcs.ts";
 import { ACTIVITIES, getVisibleActivity } from "../src/data/activities.ts";
-import { PLACES } from "../src/data/places.ts";
+import { GENERAL_CONTENT_IDS, PLACES } from "../src/data/places.ts";
 import { QUESTS, QUEST_LIST } from "../src/data/quests.ts";
 import {
   HIJRI_MONTH_NAMES,
@@ -243,7 +243,7 @@ test("setiap materi punya status eksplisit; tidak ada yang approved tanpa review
     assert.ok(["draft", "needs-review", "approved"].includes(c.reviewStatus), c.id);
     if (c.reviewStatus === "approved") assert.ok(c.reviewedBy && c.reviewedAt, `${c.id}: approved tanpa reviewedBy/reviewedAt`);
     assert.ok(c.reviewNotes.trim().length > 0, `${c.id}: tanpa catatan reviewer`);
-    assert.ok(c.pages.length >= 2 && c.pages.every((p) => p.trim().length > 10), `${c.id}: halaman kosong`);
+    assert.ok(c.pages.length >= 1 && c.pages.every((p) => p.trim().length > 10), `${c.id}: halaman kosong`);
   }
   assert.equal(new Set(LEARNING_CONTENT.map((c) => c.id)).size, LEARNING_CONTENT.length, "id kembar");
 });
@@ -322,7 +322,7 @@ test("minimal tiga quest pembelajaran Islami", () => {
 });
 
 test("setiap materi bisa dijangkau dari lokasi atau panel jam (tidak ada materi yatim)", () => {
-  const reachable = new Set([...PLACES.flatMap((p) => p.contentIds), "prayer-times"]);
+  const reachable = new Set([...PLACES.flatMap((p) => p.contentIds), ...GENERAL_CONTENT_IDS]);
   for (const c of LEARNING_CONTENT) assert.ok(reachable.has(c.id), `${c.id} tidak punya jalur akses`);
 });
 
@@ -500,32 +500,29 @@ test("aktivitas: status review eksplisit, tidak ada yang approved tanpa peninjau
     assert.ok(["draft", "needs-review"].includes(a.reviewStatus), `${a.id}: belum ada peninjau, tidak boleh approved`);
     assert.ok(a.reviewNotes.trim().length > 0);
     assert.ok(PLACES.some((p) => p.id === a.placeId && p.activityIds.includes(a.id)), `${a.id}: tidak terdaftar di lokasi ${a.placeId}`);
-    assert.ok(a.steps.length >= 3 && a.steps.every((st) => st.title.trim() && st.text.trim().length > 10));
     assert.ok(a.closing.trim().length > 10);
   }
   assert.equal(new Set(ACTIVITIES.map((a) => a.id)).size, ACTIVITIES.length);
   for (const place of PLACES) for (const id of place.activityIds) assert.ok(ACTIVITIES.some((a) => a.id === id), `${place.id}: aktivitas ${id} tidak ada`);
 });
 
-test("aktivitas tidak memakai bahasa skor, pahala, hukuman, atau klaim menggantikan ibadah, dan tidak ada aksara Arab", () => {
-  const text = ACTIVITIES.flatMap((a) => [a.title, a.closing, a.reminderHint ?? "", ...a.steps.flatMap((st) => [st.title, st.text])]).join(" ").toLowerCase();
+test("teks tambahan pengembang pada aktivitas tidak memakai bahasa skor, pahala, hukuman, atau klaim menggantikan ibadah", () => {
+  const text = ACTIVITIES.flatMap((a) => [a.title, a.actionLabel, a.practiceLabel ?? "", a.closing, a.reminderHint ?? ""]).join(" ").toLowerCase();
   for (const banned of ["pahala", "dosa", "hukuman:", "denda", "skor", "poin", "wajib bermain", "gagal"]) assert.ok(!text.includes(banned), banned);
-  assert.ok(!/[\u0600-\u06FF]/.test(text));
+  assert.ok(!/[\u0600-\u06FF]/.test(text), "teks Arab hanya boleh berasal dari panduan sumber");
 });
 
-test("aktivitas salat menegaskan bahwa game tidak menggantikan ibadah dan tidak ada nilai atau hadiah", () => {
+test("aktivitas salat: tidak ada nilai atau hadiah dan tidak apa-apa memilih bermain dulu", () => {
   const salat = ACTIVITIES.find((a) => a.kind === "salat")!;
-  const all = [...salat.steps.map((st) => st.text), salat.closing].join(" ").toLowerCase();
-  assert.ok(all.includes("tidak menggantikan"));
+  const all = salat.closing.toLowerCase();
   assert.ok(all.includes("tidak ada nilai atau hadiah"));
   assert.ok(all.includes("tidak apa-apa"));
   assert.equal(salat.availability, "prayer-window");
+  assert.equal(salat.practiceOutsideWindow, true);
 });
 
-test("aktivitas wudu menyebut perbedaan rincian dan merujuk ke guru; tidak memuat lafaz bacaan", () => {
+test("aktivitas wudu tersedia kapan saja dan berstatus needs-review", () => {
   const wudu = ACTIVITIES.find((a) => a.kind === "wudu")!;
-  const all = [...wudu.steps.map((st) => st.text), wudu.closing].join(" ").toLowerCase();
-  assert.ok(all.includes("berbeda") && all.includes("guru"));
   assert.equal(wudu.availability, "anytime");
   assert.equal(wudu.reviewStatus, "needs-review");
 });
@@ -536,21 +533,21 @@ test("aktivitas draf tersembunyi di produksi dan tampil di dev", () => {
   assert.equal(getVisibleActivity("salat-moment", true)?.id, "salat-moment");
 });
 
-test("aksi salat di masjid: aktif saat waktu salat berlangsung, redup dengan penjelasan di luar waktu", () => {
+test("aksi salat di masjid: salat saat waktunya berlangsung, latihan di luar waktu", () => {
   const salat = (h: number, m: number) => describePoi("masjid", [], { hour: h, minute: m }, true)!.actions.find((a) => a.id === "activity:salat-moment")!;
 
   const inWindow = salat(12, 30);
   assert.equal(inWindow.enabled, true);
-  assert.equal(inWindow.label, "Salat Dzuhur");
+  assert.equal(inWindow.label, "Salat Zuhur");
 
   const outside = salat(10, 0);
-  assert.equal(outside.enabled, false);
-  assert.equal(outside.label, "Salat");
-  assert.equal(outside.hint, "Belum waktu salat. Berikutnya Dzuhur 12.00");
+  assert.equal(outside.enabled, true, "di luar waktu tetap bisa berlatih");
+  assert.equal(outside.label, "Latihan salat");
+  assert.equal(salat(23, 45).label, "Latihan salat");
 
-  assert.equal(salat(16, 0).label, "Salat Ashar");
+  assert.equal(salat(16, 0).label, "Salat Asar");
   assert.equal(salat(21, 0).label, "Salat Isya");
-  assert.equal(salat(23, 45).hint, "Belum waktu salat. Berikutnya Subuh 05.00");
+  assert.equal(salat(5, 30).label, "Salat Subuh");
 });
 
 test("aksi wudu tersedia kapan saja, tidak bergantung pada waktu salat", () => {

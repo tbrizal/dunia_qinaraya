@@ -51,21 +51,6 @@ Konten ditulis tanpa kutipan ayat atau hadis. Kolom persetujuan diisi oleh penin
 - [ ] Disetujui  [ ] Perlu revisi  | Peninjau: ____________  Tanggal: ____________
 - Catatan peninjau: 
 
-### Mengenal Wudu (`wudu-intro`)
-
-- Status saat ini: **Menunggu tinjauan** (`needs-review`)
-- Kategori: wudu, tingkat usia: middle
-- Berkas: `src/data/unreviewed/learning.ts`
-- Catatan untuk peninjau: WAJIB ditinjau ahli. Periksa kalimat tentang anggota wudu secara umum dan catatan perbedaan rincian antar pendapat ulama. Tidak ada urutan langkah rinci dan tidak ada bacaan.
-
-1. Wudu adalah cara bersuci dengan air sebelum melaksanakan salat.
-2. Secara umum, wudu dilakukan dengan membasuh wajah, membasuh kedua tangan, mengusap kepala, dan membasuh kedua kaki.
-3. Rincian urutan dan bagian yang dianjurkan bisa sedikit berbeda menurut penjelasan para ulama. Karena itu, belajarlah cara berwudu langsung dari orang tua atau gurumu.
-4. Gunakan air secukupnya, tidak berlebihan. Di Qinaraya kamu hanya mengenal wudu lewat cerita singkat; ini bukan pengganti belajar langsung.
-
-- [ ] Disetujui  [ ] Perlu revisi  | Peninjau: ____________  Tanggal: ____________
-- Catatan peninjau: 
-
 ### Mengenal Waktu Salat (`prayer-times`)
 
 - Status saat ini: **Menunggu tinjauan** (`needs-review`)
@@ -73,7 +58,7 @@ Konten ditulis tanpa kutipan ayat atau hadis. Kolom persetujuan diisi oleh penin
 - Berkas: `src/data/unreviewed/learning.ts`
 - Catatan untuk peninjau: WAJIB ditinjau ahli. Periksa penjelasan waktu salat dan penegasan bahwa jadwal game hanyalah simulasi.
 
-1. Umat Islam melaksanakan salat lima waktu: Subuh, Dzuhur, Ashar, Magrib, dan Isya.
+1. Umat Islam melaksanakan salat lima waktu: Subuh, Zuhur, Asar, Magrib, dan Isya.
 2. Di dunia nyata, waktu salat bergantung pada posisi matahari di tempatmu, jadi jadwalnya berbeda di tiap daerah dan tiap hari.
 3. Jam di Qinaraya adalah jadwal simulasi yang dibuat untuk permainan. Untuk waktu salat yang sebenarnya, ikuti jadwal dari masjid atau lembaga di daerahmu.
 4. Di Qinaraya tidak ada hukuman jika kamu sedang sibuk bermain. Pengingat hanya untuk membantumu mengenal waktu.
@@ -81,43 +66,239 @@ Konten ditulis tanpa kutipan ayat atau hadis. Kolom persetujuan diisi oleh penin
 - [ ] Disetujui  [ ] Perlu revisi  | Peninjau: ____________  Tanggal: ____________
 - Catatan peninjau: 
 
-## Aktivitas terpandu (wudu dan salat)
-
-Berkas: `src/data/unreviewed/activities.ts`. Aktivitas ini sengaja hanya berupa teks langkah demi langkah:
-**tidak ada animasi gerakan wudu atau salat**, tidak ada skor, hadiah, atau pencatatan, dan tidak ada penalti bila tidak dilakukan.
-Peninjau juga diminta memutuskan apakah animasi gerakan boleh dibuat, dan bila ya, memberikan urutan yang disetujui.
-
-### Latihan Berwudu (`wudu-practice`)
+### Mengenal Wudu (`wudu-intro`)
 
 - Status saat ini: **Menunggu tinjauan** (`needs-review`)
-- Lokasi: wudu, ketersediaan: kapan saja
-- Catatan untuk peninjau: WAJIB ditinjau ahli. Periksa: anggota dan urutan yang disebut, kalimat tentang niat (sengaja tidak memuat lafaz), catatan perbedaan antar pendapat, dan seluruh teks. Tidak ada bacaan dan tidak ada animasi gerakan.
+- Kategori: wudu, tingkat usia: family
+- Berkas: `src/data/unreviewed/learning.ts`
+- Catatan untuk peninjau: Seluruh isi halaman diambil dari panduan sumber (docs/source). Periksa kecocokan dan kelengkapan; tidak ada kalimat karangan.
 
-1. **Bersiap**: Pastikan lenganmu bebas dan siapkan air secukupnya. Gunakan air dengan tidak berlebihan.
-2. **Niat**: Berwudu dimulai dengan berniat untuk bersuci. Cara meniatkannya bisa kamu tanyakan kepada orang tua atau gurumu.
-3. **Wajah**: Basuh wajahmu dengan air.
-4. **Kedua tangan**: Basuh kedua tanganmu sampai siku.
-5. **Kepala**: Usap kepalamu dengan tangan yang basah.
-6. **Kedua kaki**: Basuh kedua kakimu sampai mata kaki.
-
-- Penutup: Latihan selesai. Urutan dan rincian wudu bisa sedikit berbeda menurut penjelasan para ulama, jadi ikuti cara yang diajarkan orang tua atau gurumu. Ini hanya latihan mengenal, bukan pengganti belajar langsung. Kamu boleh mengulangnya kapan saja.
+1. Wudhu adalah bersuci menggunakan air pada anggota tubuh tertentu dengan tata cara yang telah ditentukan syariat. Wudhu merupakan salah satu syarat untuk melaksanakan salat.
+2. Persiapan sebelum berwudu:
+• Gunakan air yang suci dan menyucikan.
+• Pastikan tidak ada penghalang air pada anggota wudhu, seperti cat atau bahan kedap air.
+• Hilangkan najis yang ada pada tubuh jika ada.
+• Menghadap kiblat dan membaca basmalah merupakan amalan yang baik, tetapi bukan rukun wudhu.
 
 - [ ] Disetujui  [ ] Perlu revisi  | Peninjau: ____________  Tanggal: ____________
 - Catatan peninjau: 
 
-### Waktu Salat (`salat-moment`)
+### Rukun Wudu (`wudu-rukun`)
 
 - Status saat ini: **Menunggu tinjauan** (`needs-review`)
-- Lokasi: masjid, ketersediaan: hanya saat waktu salat sedang berlangsung
-- Catatan untuk peninjau: WAJIB ditinjau ahli. Aktivitas ini sengaja hanya berupa jeda terpandu, bukan simulasi tata cara salat. Periksa seluruh teks, terutama langkah 'Melaksanakan', dan putuskan apakah animasi gerakan (jika diinginkan) boleh dibuat serta bagaimana urutannya.
+- Kategori: wudu, tingkat usia: family
+- Berkas: `src/data/unreviewed/learning.ts`
+- Catatan untuk peninjau: Seluruh isi halaman diambil dari panduan sumber (docs/source). Periksa kecocokan dan kelengkapan; tidak ada kalimat karangan.
 
-1. **Waktunya tiba**: Waktu {prayer} sedang berlangsung di Qinaraya (jadwal simulasi). Kamu bisa berhenti sejenak dari kesibukanmu.
-2. **Bersiap**: Pastikan dirimu dan tempatnya bersih. Jika belum berwudu, tempat wudu ada di sebelah kiri masjid.
-3. **Tenang**: Atur napasmu, bersikaplah tenang, dan hadapkan dirimu ke arah salat sesuai yang diajarkan orang tua atau gurumu.
-4. **Melaksanakan**: Salat dilakukan di dunia nyata sesuai tata cara yang diajarkan kepadamu. Di dalam game kita hanya berhenti sejenak bersama-sama; permainan tidak menggantikan ibadah yang sebenarnya.
-5. **Selesai**: Setelah selesai, rapikan tempatmu dan lanjutkan harimu dengan tenang.
+1. Dalam mazhab Syafi'i, rukun wudhu ada enam:
 
-- Penutup: Terima kasih sudah berhenti sejenak. Tidak ada nilai atau hadiah untuk ini, dan tidak apa-apa jika kamu memilih bermain dulu.
+1. Niat ketika mulai membasuh wajah.
+2. Membasuh seluruh wajah.
+3. Membasuh kedua tangan sampai siku.
+4. Mengusap sebagian kepala.
+5. Membasuh kedua kaki sampai mata kaki.
+6. Tertib, yaitu melakukan rukun-rukun tersebut secara berurutan.
+2. Penting: Berkumur, membersihkan hidung, membasuh anggota tiga kali, mengusap telinga, membaca basmalah, dan membaca doa setelah wudhu termasuk sunah, bukan rukun menurut mazhab Syafi'i.
+
+- [ ] Disetujui  [ ] Perlu revisi  | Peninjau: ____________  Tanggal: ____________
+- Catatan peninjau: 
+
+### Hal yang Membatalkan Wudu (`wudu-pembatal`)
+
+- Status saat ini: **Menunggu tinjauan** (`needs-review`)
+- Kategori: wudu, tingkat usia: family
+- Berkas: `src/data/unreviewed/learning.ts`
+- Catatan untuk peninjau: Seluruh isi halaman diambil dari panduan sumber (docs/source). Periksa kecocokan dan kelengkapan; tidak ada kalimat karangan.
+
+1. Menurut mazhab Syafi'i, hal-hal yang membatalkan wudhu antara lain:
+
+• Keluar sesuatu dari qubul atau dubur, selain mani.
+• Hilang akal karena tidur, pingsan, mabuk, atau sebab lain, dengan pengecualian tidur dalam posisi duduk yang mantap sesuai ketentuan fikih.
+• Bersentuhan kulit antara laki-laki dan perempuan yang bukan mahram dan telah mencapai batas ketentuan fikih, tanpa penghalang.
+• Menyentuh kemaluan manusia atau lingkaran dubur dengan bagian dalam telapak tangan atau jari, tanpa penghalang.
+2. Untuk kasus khusus, ikuti penjelasan guru agama atau ulama yang tepercaya.
+
+- [ ] Disetujui  [ ] Perlu revisi  | Peninjau: ____________  Tanggal: ____________
+- Catatan peninjau: 
+
+### Persiapan Sebelum Salat (`salat-persiapan`)
+
+- Status saat ini: **Menunggu tinjauan** (`needs-review`)
+- Kategori: salat, tingkat usia: family
+- Berkas: `src/data/unreviewed/learning.ts`
+- Catatan untuk peninjau: Seluruh isi halaman diambil dari panduan sumber (docs/source). Periksa kecocokan dan kelengkapan; tidak ada kalimat karangan.
+
+1. Sebelum salat, pastikan:
+
+1. Beragama Islam dan berakal.
+2. Suci dari hadas kecil dan besar.
+3. Badan, pakaian, serta tempat salat suci dari najis.
+4. Menutup aurat.
+5. Telah masuk waktu salat.
+6. Menghadap kiblat.
+7. Mengetahui salat yang akan dikerjakan dan menghadirkan niat di dalam hati.
+
+- [ ] Disetujui  [ ] Perlu revisi  | Peninjau: ____________  Tanggal: ____________
+- Catatan peninjau: 
+
+### Salat Lima Waktu dan Jumlah Rakaat (`salat-rakaat`)
+
+- Status saat ini: **Menunggu tinjauan** (`needs-review`)
+- Kategori: salat, tingkat usia: family
+- Berkas: `src/data/unreviewed/learning.ts`
+- Catatan untuk peninjau: Seluruh isi halaman diambil dari panduan sumber (docs/source). Periksa kecocokan dan kelengkapan; tidak ada kalimat karangan.
+
+1. Subuh: 2 rakaat. Tasyahud akhir pada rakaat kedua
+Zuhur: 4 rakaat. Tasyahud awal setelah rakaat kedua
+Asar: 4 rakaat. Tasyahud awal setelah rakaat kedua
+Magrib: 3 rakaat. Tasyahud awal setelah rakaat kedua
+Isya: 4 rakaat. Tasyahud awal setelah rakaat kedua
+
+- [ ] Disetujui  [ ] Perlu revisi  | Peninjau: ____________  Tanggal: ____________
+- Catatan peninjau: 
+
+### Rukun Salat (`salat-rukun`)
+
+- Status saat ini: **Menunggu tinjauan** (`needs-review`)
+- Kategori: salat, tingkat usia: family
+- Berkas: `src/data/unreviewed/learning.ts`
+- Catatan untuk peninjau: Seluruh isi halaman diambil dari panduan sumber (docs/source). Periksa kecocokan dan kelengkapan; tidak ada kalimat karangan.
+
+1. Rukun salat yang umum dirangkum berjumlah 13:
+
+1. Niat.
+2. Berdiri bagi yang mampu dalam salat fardu.
+3. Takbiratul ihram.
+4. Membaca Surah Al-Fatihah.
+5. Rukuk dengan tumakninah.
+6. Iktidal dengan tumakninah.
+7. Sujud dua kali dengan tumakninah.
+8. Duduk di antara dua sujud dengan tumakninah.
+9. Duduk tasyahud akhir.
+10. Membaca tasyahud akhir.
+11. Membaca selawat kepada Nabi pada tasyahud akhir.
+12. Salam pertama.
+13. Tertib, yaitu melaksanakan rukun sesuai urutannya.
+2. Tumakninah berarti berhenti sejenak dengan tenang pada gerakan rukuk, iktidal, sujud, dan duduk di antara dua sujud. Jangan melakukan gerakan salat secara terburu-buru.
+
+- [ ] Disetujui  [ ] Perlu revisi  | Peninjau: ____________  Tanggal: ____________
+- Catatan peninjau: 
+
+### Sunah dan Hal yang Perlu Diperhatikan (`salat-sunah`)
+
+- Status saat ini: **Menunggu tinjauan** (`needs-review`)
+- Kategori: salat, tingkat usia: family
+- Berkas: `src/data/unreviewed/learning.ts`
+- Catatan untuk peninjau: Seluruh isi halaman diambil dari panduan sumber (docs/source). Periksa kecocokan dan kelengkapan; tidak ada kalimat karangan.
+
+1. • Doa iftitah adalah sunah, bukan rukun.
+• Membaca surah setelah Al-Fatihah pada dua rakaat pertama adalah sunah.
+• Bacaan tasbih rukuk dan sujud adalah sunah; bacaan minimal yang sah dalam rukun-rukun tertentu perlu mengikuti ketentuan mazhab.
+• Tasyahud awal dan duduk tasyahud awal termasuk sunah ab'ad dalam mazhab Syafi'i.
+• Qunut Subuh termasuk sunah ab'ad menurut mazhab Syafi'i.
+• Tumakninah merupakan bagian dari rukun salat.
+• Orang yang tidak mampu berdiri dapat salat dengan posisi yang mampu dilakukan sesuai ketentuan fikih.
+
+- [ ] Disetujui  [ ] Perlu revisi  | Peninjau: ____________  Tanggal: ____________
+- Catatan peninjau: 
+
+### Sumber Panduan (`ibadah-sumber`)
+
+- Status saat ini: **Menunggu tinjauan** (`needs-review`)
+- Kategori: sumber, tingkat usia: family
+- Berkas: `src/data/unreviewed/learning.ts`
+- Catatan untuk peninjau: Seluruh isi halaman diambil dari panduan sumber (docs/source). Periksa kecocokan dan kelengkapan; tidak ada kalimat karangan.
+
+1. Al-Qur'an
+1. QS. Al-Ma'idah [5]: 6 — Perintah wudhu dan anggota tubuh yang dibasuh atau diusap.
+- https://quran.com/5/6
+2. QS. Al-Baqarah [2]: 43 — Perintah mendirikan salat.
+- https://quran.com/2/43
+3. QS. Al-Mu'minun [23]: 1–2 — Ciri orang beriman yang khusyuk dalam salat.
+- https://quran.com/23/1-2
+2. Hadis
+1. Sahih al-Bukhari No. 631 — Perintah Nabi Muhammad ﷺ: “Salatlah kalian sebagaimana kalian melihat aku salat.”
+- https://sunnah.com/bukhari:631
+2. Sahih al-Bukhari No. 159 dan Sahih Muslim No. 226 — Riwayat tata cara wudhu Utsman bin Affan r.a. yang memperlihatkan wudhu Nabi ﷺ.
+- https://sunnah.com/bukhari:159
+- https://sunnah.com/muslim:226
+3. Sahih Muslim No. 234 — Keutamaan menyempurnakan wudhu.
+- https://sunnah.com/muslim:234
+3. Rujukan pembelajaran Indonesia
+• Kementerian Agama Republik Indonesia — Buku Fikih Madrasah (materi bersuci dan salat).
+• https://cendikia.kemenag.go.id/
+• NU Online — Artikel fikih wudhu dan salat berdasarkan mazhab Syafi'i.
+• https://islam.nu.or.id/
+
+- [ ] Disetujui  [ ] Perlu revisi  | Peninjau: ____________  Tanggal: ____________
+- Catatan peninjau: 
+
+## Panduan wudu dan salat (sumber dari pemilik proyek)
+
+Sumber: `docs/source/panduan_wudhu_dan_salat_dunia_qinaraya.md` (SHA-256 aa4dfee8dc48...).
+Seluruh kalimat petunjuk, bacaan Arab, transliterasi, dan arti diekstrak otomatis (`npm run guide:import`), tidak diketik ulang.
+Test membandingkan setiap baris Arab dengan sumber secara persis. Teks tambahan dari pengembang dibatasi pada judul, label, dan catatan penghubung yang daftarnya ada di `tests/worship-guide.test.ts`.
+
+Berkas data: `src/data/unreviewed/ibadahGuide.ts` (pemetaan), `ibadahGuide.generated.ts` (hasil ekstraksi), `ibadahLearning.ts` (materi baca).
+
+### Langkah wudu dalam game
+
+1. Niat (rukun) - animasi `wudu-niat`
+2. Membaca basmalah (sunah) - animasi `wudu-basmalah`
+3. Membasuh kedua telapak tangan (sunah) - animasi `wudu-hands`
+4. Berkumur-kumur (sunah) - animasi `wudu-mouth`
+5. Membersihkan hidung (sunah) - animasi `wudu-nose`
+6. Membasuh wajah (rukun) - animasi `wudu-face`
+7. Membasuh kedua tangan sampai siku (rukun) - animasi `wudu-arms`
+8. Mengusap sebagian kepala (rukun) - animasi `wudu-head`
+9. Mengusap kedua telinga (sunah) - animasi `wudu-ears`
+10. Membasuh kedua kaki sampai mata kaki (rukun) - animasi `wudu-feet`
+11. Membaca doa setelah wudu (sunah) - animasi `wudu-dua`
+
+### Urutan salat dalam game
+
+- Subuh: 2 rakaat, 22 langkah
+- Zuhur: 4 rakaat, 37 langkah
+- Asar: 4 rakaat, 37 langkah
+- Magrib: 3 rakaat, 30 langkah
+- Isya: 4 rakaat, 37 langkah
+
+### Keputusan implementasi yang perlu dikonfirmasi peninjau
+
+Hal-hal berikut tidak disebut tegas di panduan sumber, sehingga implementasinya mengambil bentuk paling sederhana atau netral:
+
+1. **Label sunah untuk 'membasuh telapak tangan'.** Panduan tidak memasukkannya ke enam rukun, tetapi juga tidak menyebutnya sunah. Ditampilkan sebagai sunah.
+2. **Label sunah untuk taawuz.** Tidak termasuk rukun salat; panduan tidak menyebutnya sunah secara eksplisit.
+3. **Bacaan tasyahud awal.** Panduan hanya merinci bacaan tasyahud pada tasyahud akhir. Pada tasyahud awal ditampilkan tasyahud tanpa selawat, disertai catatan bahwa panduan tidak merincinya.
+4. **Posisi duduk tasyahud awal.** Panduan tidak menyebutnya. Digambarkan iftirasy (seperti duduk di antara dua sujud).
+5. **Posisi tangan setelah iktidal.** Panduan tidak menyebutnya. Digambarkan diturunkan di sisi tubuh.
+6. **Salam kedua** diberi label netral (bukan rukun, bukan sunah), karena panduan hanya menyebut salam pertama sebagai rukun.
+7. **Niat salat selain Subuh.** Panduan hanya memberi lafal contoh untuk Subuh. Salat lain tidak diberi lafal; ditampilkan catatan bahwa niat di dalam hati yang wajib.
+8. **Al-Fatihah dan surah pendek.** Teks Arabnya tidak ada di panduan, jadi tidak ditampilkan; pemain diarahkan ke mushaf atau guru.
+9. **Qunut Subuh** tidak dimasukkan karena tidak ada di panduan.
+10. **Jari telunjuk saat tasyahud, posisi telapak tangan, dan arah pandangan.** Tidak dirinci panduan; animasi tidak menggambarkannya secara spesifik.
+11. **Tawarruk.** Karena kerangka karakter belum punya gerak menyamping pada pinggul, kaki kiri digambarkan terselip ke belakang di bawah paha, bukan melintas di bawah betis kanan.
+12. **Qibla.** Di dunia Qinaraya qibla ditetapkan ke arah utara sesuai desain masjid (pintu menghadap selatan). Ini pengaturan dunia fiktif.
+13. **Jumlah basuhan.** Animasi mengulang tiga kali sesuai yang disunahkan di panduan; satu kali basuhan merata sudah memenuhi rukun.
+
+### Aktivitas dalam game
+
+#### Berwudu (`wudu-practice`)
+
+- Status saat ini: **Menunggu tinjauan** (`needs-review`)
+- Lokasi: wudu, ketersediaan: kapan saja
+- Catatan untuk peninjau: WAJIB ditinjau ahli. Isi dan urutan 11 langkah berasal dari panduan sumber. Periksa pelabelan rukun dan sunah (langkah 'membasuh telapak tangan' diberi label sunah karena tidak termasuk enam rukun yang disebut panduan, namun panduan tidak menyebutnya sunah secara eksplisit) dan animasi 3D untuk tiap langkah.
+- Penutup (tambahan pengembang): Latihan berwudu selesai. Kamu boleh mengulangnya kapan saja.
+
+- [ ] Disetujui  [ ] Perlu revisi  | Peninjau: ____________  Tanggal: ____________
+- Catatan peninjau: 
+
+#### Salat (`salat-moment`)
+
+- Status saat ini: **Menunggu tinjauan** (`needs-review`)
+- Lokasi: masjid, ketersediaan: salat sesungguhnya hanya saat waktu salat berlangsung; di luar itu tersedia sebagai latihan
+- Catatan untuk peninjau: WAJIB ditinjau ahli. Urutan salat 2, 3, dan 4 rakaat berasal dari panduan sumber. Perlu dikonfirmasi: (1) bacaan tasyahud awal (panduan tidak merinci terpisah; ditampilkan tasyahud tanpa selawat), (2) posisi duduk tasyahud awal (iftirasy; panduan tidak menyebutnya), (3) posisi tangan setelah iktidal (diturunkan di sisi tubuh; panduan tidak menyebutnya), (4) label salam kedua (tanpa label rukun atau sunah), (5) teks Al-Fatihah dan surah pendek yang tidak ada di panduan, (6) semua animasi gerakan 3D.
+- Penutup (tambahan pengembang): Terima kasih sudah berhenti sejenak. Tidak ada nilai atau hadiah untuk ini, dan tidak apa-apa jika kamu memilih bermain dulu.
 - Kalimat pada pengingat waktu salat: Kamu bisa berwudu dan salat di masjid, atau lanjut bermain.
 
 - [ ] Disetujui  [ ] Perlu revisi  | Peninjau: ____________  Tanggal: ____________
@@ -202,5 +383,5 @@ Berkas: `src/data/unreviewed/ustadzDialogue.ts`. Dialog cadangan (non-agama) ada
 ## Lokasi
 
 - Masjid Qinaraya: Tempat ibadah dan berkumpul warga (materi: masjid-intro, masjid-adab)
-- Tempat wudu: Tempat bersuci di dekat masjid (materi: wudu-intro)
+- Tempat wudu: Tempat bersuci di dekat masjid (materi: wudu-intro, wudu-rukun, wudu-pembatal)
 
